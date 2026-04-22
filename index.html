@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>MIDI → GRAB JSON Maker</title>
-  <meta name="description" content="Convert MIDI into a GRAB-style JSON level with reusable sound nodes, trigger nodes, and animated colored blocks." />
+  <meta name="description" content="Convert MIDI into a GRAB-style JSON level with one sound node, one trigger node, and one animated block per note." />
   <style>
     :root {
       --bg: #050608;
@@ -127,7 +127,7 @@
     .timeline-wrap { position: relative; margin: 18px; height: 248px; border-radius: 18px; border: 1px solid rgba(255,255,255,0.08); background: linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px), rgba(0,0,0,0.22); background-size: 100% 24px, 40px 100%, auto; overflow: auto; }
     .timeline { position: relative; min-height: 100%; width: 100%; }
     .lane-line { position:absolute; left:0; right:0; height:1px; background: rgba(255,255,255,0.03); }
-    .note-block { position: absolute; border-radius: 10px; opacity: .94; box-shadow: 0 0 18px rgba(124,246,255,0.12); transform-origin: center; transition: transform .08s linear, filter .08s linear, opacity .08s linear; }
+    .note-block { position: absolute; border-radius: 10px; opacity: .94; box-shadow: 0 0 18px rgba(124,246,255,0.12); transform-origin: center; transition: left 180ms linear, transform 180ms linear, filter .08s linear, opacity .08s linear; }
     .note-block.active { transform: scaleY(1.08) scaleX(1.02); filter: brightness(1.35) saturate(1.2); opacity: 1; animation: pulse .38s ease-out 1; }
     .trigger-marker { position: absolute; width: 10px; height: 10px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.5); transform: translate(-50%, -50%); box-shadow: 0 0 18px rgba(255,255,255,0.12); opacity: 0.9; }
     .trigger-marker.active { animation: triggerPulse .35s ease-out 1; }
@@ -158,18 +158,18 @@
           <div class="badge">midi · grab json maker</div>
           <h1>Turn MIDI<br>into GRAB.</h1>
           <p class="desc">
-            This generator keeps the node graph compact: one reusable sound node per pitch, one trigger node per note,
-            and one animated colored block per note instance that moves into its trigger at the right time.
+            This generator now makes a one-to-one layout: every MIDI note becomes one sound node, one trigger node, and one animated block.
+            That means 38 notes export as 38 sounds, 38 triggers, and 38 blocks.
           </p>
           <div class="stats">
-            <div class="stat"><b>Sound nodes</b><span>Created once per pitch, not once per note.</span></div>
-            <div class="stat"><b>Trigger nodes</b><span>Each note gets a trigger wired to its sound target.</span></div>
-            <div class="stat"><b>Animated blocks</b><span>Colored blocks travel into the trigger on note time.</span></div>
-            <div class="stat"><b>JSON</b><span>Exports a GRAB-style structure for editor/import workflows.</span></div>
+            <div class="stat"><b>Sound</b><span>Creates one GRAB sound node per note.</span></div>
+            <div class="stat"><b>Trigger</b><span>Each block hits a trigger that activates its sound target.</span></div>
+            <div class="stat"><b>Block</b><span>Colored node animates into the trigger point.</span></div>
+            <div class="stat"><b>JSON</b><span>Exports GRAB-style JSON for editor/import workflows.</span></div>
           </div>
         </div>
         <div class="hero-bottom">
-          The GRAB editor exposes Node, Trigger, Sound, animation, groups, and JSON export tools, so this page mirrors that shape instead of faking lots of note clones. ([grab-tools.live](https://grab-tools.live/editor))
+          The GRAB Tools editor exposes Trigger, Sound, Static, Animated, and JSON export tools, so matching those node families in the export is the right direction for import. ([grab-tools.live](https://grab-tools.live/editor))
         </div>
       </section>
 
@@ -208,7 +208,7 @@
             <button class="btn" id="buildBtn" type="button">Build JSON</button>
             <button class="btn ghost" id="demoBtn" type="button">Load Demo Look</button>
           </div>
-          <p class="small">Notes are parsed in-browser with <span class="mono" style="display:inline; padding:2px 6px;">@tonejs/midi</span>. The preview playback uses Tone.js. ([grab-tools.live](https://grab-tools.live/editor))</p>
+          <p class="small">Notes are parsed in-browser with <span class="mono" style="display:inline; padding:2px 6px;">@tonejs/midi</span>. Playback uses the Web Audio API so the preview still makes actual sound without depending on external synth wrappers. ([wiki.grab-tools.live](https://wiki.grab-tools.live/wiki/SFX2GRAB?utm_source=chatgpt.com))</p>
           <div class="output" id="status">Ready.</div>
           <div class="pillrow" id="summaryPills"></div>
         </div>
@@ -234,7 +234,7 @@
               <div class="legend">
                 <span class="chip"><span class="dot"></span> Colored block hits trigger</span>
                 <span class="chip">Trigger starts sound node</span>
-                <span class="chip">Repeated pitches reuse sound nodes</span>
+                <span class="chip">One node per note</span>
               </div>
             </div>
             <div class="list" id="noteList">No notes yet.</div>
@@ -250,14 +250,13 @@
             <button class="btn" id="downloadJsonBtn" type="button" disabled>Download JSON</button>
             <button class="btn ghost" id="copyJsonBtn" type="button" disabled>Copy JSON</button>
           </div>
-          <p class="small">Exported nodes follow the same GRAB node families you pointed to: <span class="mono" style="display:inline; padding:2px 6px;">levelNodeSound</span>, <span class="mono" style="display:inline; padding:2px 6px;">levelNodeTrigger</span>, and <span class="mono" style="display:inline; padding:2px 6px;">levelNodeStatic</span>. ([grab-tools.live](https://grab-tools.live/editor))</p>
+          <p class="small">Each note exports as one <span class="mono" style="display:inline; padding:2px 6px;">levelNodeSound</span>, one <span class="mono" style="display:inline; padding:2px 6px;">levelNodeTrigger</span>, and one <span class="mono" style="display:inline; padding:2px 6px;">levelNodeStatic</span>, with sound settings set to <span class="mono" style="display:inline; padding:2px 6px;">maxRangeFactor: 100</span> and <span class="mono" style="display:inline; padding:2px 6px;">lowPassFilterFrequency: 100</span>.</p>
           <div class="output" id="exportStatus">Ready.</div>
         </div>
       </section>
     </div>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/tone@14.8.49/build/Tone.js"></script>
   <script src="https://unpkg.com/@tonejs/midi@2.0.28/build/Midi.js"></script>
   <script>
     const tabConvert = document.getElementById('tabConvert');
@@ -291,17 +290,17 @@
     let midi = null;
     let currentNotes = [];
     let exportData = null;
-    let toneReady = false;
     let playing = false;
     let activeTimers = [];
     let animationFrame = 0;
-    let synthPool = {};
     let playbackStart = 0;
     let currentDuration = 0;
     let currentScale = 170;
     let currentPitchGap = 22;
     let currentBlocks = [];
     let currentTriggers = [];
+    let audioCtx = null;
+    let activeAudio = [];
 
     function setMode(mode) {
       [tabConvert, tabPreview, tabExport].forEach(t => t.classList.remove('active'));
@@ -333,108 +332,96 @@
       return all;
     }
 
-    // small, intentional culling/quantization so the export does not explode into tons of duplicate-ish notes
-    function quantizeNotes(notes) {
-      const pitchBuckets = new Map();
-      const volumeBuckets = [0.35, 0.55, 0.75, 1.0];
-      const unique = [];
-      const seen = new Set();
-
-      for (const note of notes) {
-        const pitch = Math.round(note.midi);
-        const vol = volumeBuckets.reduce((best, v) => Math.abs(v - note.velocity) < Math.abs(best - note.velocity) ? v : best, volumeBuckets[0]);
-        const key = `${pitch}|${vol}|${note.time.toFixed(3)}|${note.duration.toFixed(3)}`;
-        if (!seen.has(key)) {
-          seen.add(key);
-          unique.push({ ...note, midi: pitch, velocity: vol, name: midiToNoteName(pitch) });
-        }
-      }
-      return unique;
-    }
-
     function buildGrabJson(notes, duration, title = 'MIDI Export') {
-      const pitchMap = new Map();
       const nodes = [];
       const connections = [];
       let minPitch = Infinity;
       let maxPitch = -Infinity;
-
-      // one reusable sound node per pitch
-      notes.forEach((note) => {
-        if (!pitchMap.has(note.midi)) {
-          const laneIndex = pitchMap.size;
-          const soundId = uid('sound', note.midi);
-          const pitchColor = colorForPitch(note.midi);
-          const [r, g, b] = rgbFromColorString(pitchColor);
-          pitchMap.set(note.midi, { laneIndex, soundId, color: { r, g, b } });
-          minPitch = Math.min(minPitch, note.midi);
-          maxPitch = Math.max(maxPitch, note.midi);
-
-          nodes.push({
-            isLocked: false,
-            animations: [],
-            activeAnimation: 0,
-            levelNodeSound: {
-              position: { x: 0, y: laneIndex * 2.6, z: -2 },
-              parameters: {
-                volume: 1,
-                waveType: Number(waveTypeEl.value || 0),
-                envelopeAttack: 0.01,
-                envelopeSustain: 0.15,
-                envelopeRelease: 0.06,
-                envelopePunch: 0,
-                frequencyBase: midiToFrequency(note.midi),
-                frequencyLimit: 0,
-                frequencyRamp: 0,
-                frequencyDeltaRamp: 0,
-                vibratoStrength: 0,
-                vibratoSpeed: 0,
-                pitchJumpMod: 0,
-                pitchJumpSpeed: 0,
-                dutyCycle: 0.5,
-                dutyCycleRamp: 0,
-                repeatSpeed: 0,
-                flangerFrequency: 0,
-                flangerDepth: 0,
-                lowPassFilterFrequency: 0,
-                highPassFilterFrequency: 0,
-                reverbDelay: 0,
-                reverbDecayFactor: 0
-              },
-              name: `sound_${note.midi}`,
-              repeat: false,
-              volume: 1,
-              startActive: false,
-              rotation: { x: 0, y: 0, z: 0, w: 1 },
-              maxRangeFactor: 1
-            }
-          });
-        }
-      });
+      const soundIds = [];
 
       notes.forEach((note, i) => {
-        const pitchInfo = pitchMap.get(note.midi);
-        const laneY = pitchInfo.laneIndex * 2.6;
-        const triggerX = note.time * currentScale;
-        const blockStartX = Math.max(0, triggerX - Math.max(70, currentScale * 0.45));
-        const blockColor = colorForPitch(note.midi);
-        const [r, g, b] = rgbFromColorString(blockColor);
-        const blockId = uid('block', `${i}_${note.midi}`);
-        const triggerId = uid('trigger', `${i}_${note.midi}`);
+        minPitch = Math.min(minPitch, note.midi);
+        maxPitch = Math.max(maxPitch, note.midi);
+        const color = colorForPitch(note.midi);
+        const [r, g, b] = rgbFromColorString(color);
+        const soundId = i * 3 + 1;
+        const triggerId = i * 3 + 2;
+        const blockId = i * 3 + 3;
+        soundIds.push(soundId);
 
         nodes.push({
+          objectID: soundId,
           isLocked: false,
-          animations: [
-            {
-              name: 'hit_trigger',
-              frames: [
-                { position: { x: blockStartX, y: laneY, z: -3 }, rotation: { x: 0, y: 0, z: 0, w: 1 }, time: Math.max(0, note.time - 0.18) },
-                { position: { x: triggerX, y: laneY, z: 0 }, rotation: { x: 0, y: 0, z: 0, w: 1 }, time: note.time }
-              ],
-              speed: 1,
-              currentFrameIndex: 0
-            }
-          ],
+          animations: [],
+          activeAnimation: 0,
+          levelNodeSound: {
+            position: { x: 0, y: 0, z: -2 },
+            parameters: {
+              volume: Math.max(0.18, Math.min(1, note.velocity)),
+              waveType: Number(waveTypeEl.value || 0),
+              envelopeAttack: 0.01,
+              envelopeSustain: 0.9,
+              envelopeRelease: 0.08,
+              envelopePunch: 0,
+              frequencyBase: Math.round(midiToFrequency(note.midi)),
+              frequencyLimit: 35,
+              frequencyRamp: 0,
+              frequencyDeltaRamp: 0,
+              vibratoStrength: 0,
+              vibratoSpeed: 0,
+              pitchJumpMod: 0.1,
+              pitchJumpSpeed: 0,
+              dutyCycle: 0.5,
+              dutyCycleRamp: 0,
+              repeatSpeed: 0,
+              flangerFrequency: 0,
+              flangerDepth: 0,
+              lowPassFilterFrequency: 100,
+              highPassFilterFrequency: 0,
+              reverbDelay: 0,
+              reverbDecayFactor: 0
+            },
+            name: `sound_${i}`,
+            repeat: false,
+            volume: Math.max(0.18, Math.min(1, note.velocity)),
+            startActive: false,
+            rotation: { x: 0, y: 0, z: 0, w: 1 },
+            maxRangeFactor: 100
+          }
+        });
+
+        const laneY = (maxPitch - note.midi) * 2.6;
+        const triggerX = note.time * currentScale;
+        const blockStartX = Math.max(0, triggerX - Math.max(85, currentScale * 0.48));
+
+        nodes.push({
+          objectID: triggerId,
+          isLocked: false,
+          animations: [],
+          activeAnimation: 0,
+          levelNodeTrigger: {
+            shape: 1000,
+            position: { x: triggerX, y: laneY, z: 0 },
+            scale: { x: 1, y: 1, z: 1 },
+            rotation: { x: 0, y: 0, z: 0, w: 1 },
+            isShared: false,
+            triggerSources: [{ triggerSourceBasic: { type: 4, objectID: blockId } }],
+            triggerTargets: [{ triggerTargetSound: { objectID: soundId, mode: 0 } }]
+          }
+        });
+
+        nodes.push({
+          objectID: blockId,
+          isLocked: false,
+          animations: [{
+            name: 'hit_trigger',
+            speed: 1,
+            currentFrameIndex: 0,
+            frames: [
+              { time: Math.max(0, note.time - 0.22), position: { x: blockStartX, y: laneY, z: -3 }, rotation: { x: 0, y: 0, z: 0, w: 1 } },
+              { time: note.time, position: { x: triggerX, y: laneY, z: 0 }, rotation: { x: 0, y: 0, z: 0, w: 1 } }
+            ]
+          }],
           activeAnimation: 0,
           levelNodeStatic: {
             shape: 1000,
@@ -456,71 +443,24 @@
           }
         });
 
-        nodes.push({
-          isLocked: false,
-          animations: [
-            {
-              name: 'idle',
-              frames: [
-                { position: { x: triggerX, y: laneY, z: 0 }, rotation: { x: 0, y: 0, z: 0, w: 1 }, time: 0 }
-              ],
-              speed: 1,
-              currentFrameIndex: 0
-            }
-          ],
-          activeAnimation: 0,
-          levelNodeTrigger: {
-            shape: 1000,
-            position: { x: triggerX, y: laneY, z: 0 },
-            scale: { x: 1, y: 1, z: 1 },
-            rotation: { x: 0, y: 0, z: 0, w: 1 },
-            isShared: false,
-            triggerSources: [
-              { triggerSourceBasic: { type: 4 } }
-            ],
-            triggerTargets: [
-              { triggerTargetSound: { objectID: Object.keys(pitchMap).length ? 1 : 1, mode: 0 } }
-            ]
-          }
-        });
-
         connections.push({
           noteIndex: i,
-          blockId,
-          triggerId,
-          soundId: pitchInfo.soundId,
           time: note.time,
           duration: note.duration,
           midi: note.midi,
           note: note.name,
           velocity: note.velocity,
-          laneIndex: pitchInfo.laneIndex,
-          triggerSourceType: 4
+          soundObjectID: soundId,
+          triggerObjectID: triggerId,
+          blockObjectID: blockId
         });
       });
-
-      // Fix triggerTargets objectID based on sound-node order in the array.
-      const soundObjectIds = new Map();
-      let counter = 1;
-      for (const node of nodes) {
-        if (node.levelNodeSound) {
-          soundObjectIds.set(node.levelNodeSound.name, counter++);
-        }
-      }
-      for (const node of nodes) {
-        if (node.levelNodeTrigger) {
-          const laneY = node.levelNodeTrigger.position.y;
-          const possibleSound = nodes.find(n => n.levelNodeSound && n.levelNodeSound.position.y === laneY);
-          const soundName = possibleSound?.levelNodeSound?.name;
-          node.levelNodeTrigger.triggerTargets = [{ triggerTargetSound: { objectID: soundObjectIds.get(soundName) || 1, mode: 0 } }];
-        }
-      }
 
       return {
         formatVersion: 17,
         title,
         creators: 'MIDI2GRAB',
-        description: 'Generated from MIDI with reusable sound nodes, trigger nodes, and animated colored blocks.',
+        description: 'Generated from MIDI with one sound node, one trigger node, and one animated colored block per note.',
         tags: ['midi', 'generated', 'music', 'triggers'],
         maxCheckpointCount: 10,
         ambienceSettings: {
@@ -535,10 +475,10 @@
         meta: {
           duration,
           noteCount: notes.length,
-          uniquePitches: pitchMap.size,
-          pitchRange: pitchMap.size ? { min: minPitch, max: maxPitch } : null,
+          uniquePitches: new Set(notes.map(n => n.midi)).size,
+          pitchRange: notes.length ? { min: minPitch, max: maxPitch } : null,
           createdAt: new Date().toISOString(),
-          soundNodes: pitchMap.size,
+          soundNodes: notes.length,
           triggerNodes: notes.length,
           animatedBlocks: notes.length
         },
@@ -550,8 +490,9 @@
           time: n.time,
           duration: n.duration,
           velocity: n.velocity,
-          soundId: pitchMap.get(n.midi).soundId,
-          laneIndex: pitchMap.get(n.midi).laneIndex
+          soundObjectID: i * 3 + 1,
+          triggerObjectID: i * 3 + 2,
+          blockObjectID: i * 3 + 3
         }))
       };
     }
@@ -578,13 +519,14 @@
       currentBlocks = []; currentTriggers = [];
       notes.forEach((note, idx) => {
         const top = (maxPitch - note.midi) * currentPitchGap + 14;
-        const left = Math.max(0, note.time * currentScale - Math.max(70, currentScale * 0.45));
+        const triggerLeft = note.time * currentScale;
+        const blockLeft = Math.max(0, triggerLeft - Math.max(85, currentScale * 0.48));
         const widthPx = Math.max(8, note.duration * currentScale);
         const color = colorForPitch(note.midi);
         const block = document.createElement('div');
         block.className = 'note-block';
         block.id = `note_${idx}`;
-        block.style.left = `${left}px`;
+        block.style.left = `${blockLeft}px`;
         block.style.top = `${top}px`;
         block.style.width = `${widthPx}px`;
         block.style.height = `${Math.max(12, currentPitchGap - 7)}px`;
@@ -595,7 +537,7 @@
         const marker = document.createElement('div');
         marker.className = 'trigger-marker';
         marker.id = `trigger_${idx}`;
-        marker.style.left = `${note.time * currentScale}px`;
+        marker.style.left = `${triggerLeft}px`;
         marker.style.top = `${top + Math.max(12, currentPitchGap - 7) / 2}px`;
         marker.style.background = color;
         timeline.appendChild(marker);
@@ -603,8 +545,8 @@
       });
 
       noteList.innerHTML = notes.map((n, i) => {
-        const lane = exportObj.notes[i].laneIndex;
-        return `<div class="list-item" id="row_${i}"><div class="mono">${n.time.toFixed(2)}s</div><div>${escapeHtml(n.name)} · MIDI ${n.midi}<br><span class="small">Lane ${lane} · ${n.duration.toFixed(2)}s</span></div><div class="mono">${n.velocity.toFixed(2)}</div></div>`;
+        const s = exportObj.notes[i];
+        return `<div class="list-item" id="row_${i}"><div class="mono">${n.time.toFixed(2)}s</div><div>${escapeHtml(n.name)} · MIDI ${n.midi}<br><span class="small">Sound ${s.soundObjectID} · Trigger ${s.triggerObjectID}</span></div><div class="mono">${n.velocity.toFixed(2)}</div></div>`;
       }).join('');
 
       previewBg.style.background = `radial-gradient(circle at 50% 0%, rgba(124,246,255,0.12), transparent 35%), radial-gradient(circle at 70% 100%, rgba(157,124,255,0.12), transparent 35%), linear-gradient(180deg, rgba(124,246,255,0.06), rgba(0,0,0,0.15))`;
@@ -614,40 +556,79 @@
       copyJsonBtn.disabled = false;
     }
 
-    async function ensureTone() { if (!toneReady) { await Tone.start(); toneReady = true; } }
-    function getSynth(midiPitch) {
-      const key = `pitch_${midiPitch}_${waveTypeEl.value}`;
-      if (!synthPool[key]) {
-        const oscMap = { '0': 'sine', '1': 'square', '2': 'triangle', '3': 'sawtooth' };
-        synthPool[key] = new Tone.PolySynth(Tone.Synth, { oscillator: { type: oscMap[waveTypeEl.value] || 'sine' }, envelope: { attack: 0.005, decay: 0.08, sustain: 0.18, release: 0.14 } }).toDestination();
-      }
-      return synthPool[key];
+    function midiWaveTypeToOscType(v) { return ({ '0': 'sine', '1': 'square', '2': 'triangle', '3': 'sawtooth' })[String(v)] || 'sine'; }
+
+    function ensureAudioContext() {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      return audioCtx;
     }
+
     function stopPlayback() {
       playing = false;
       activeTimers.forEach(clearTimeout); activeTimers = [];
+      activeAudio.forEach(({ osc, gain, filter }) => {
+        try { osc.stop(); } catch {}
+        try { gain.disconnect(); } catch {}
+        try { filter.disconnect(); } catch {}
+        try { osc.disconnect(); } catch {}
+      });
+      activeAudio = [];
       if (animationFrame) cancelAnimationFrame(animationFrame); animationFrame = 0;
       document.querySelectorAll('.note-block.active').forEach(el => el.classList.remove('active'));
       document.querySelectorAll('.trigger-marker.active').forEach(el => el.classList.remove('active'));
       document.querySelectorAll('.list-item.active').forEach(el => el.classList.remove('active'));
       playhead.style.left = '0px'; playBtn.textContent = 'Play'; stopBtn.disabled = true;
     }
+
+    function playWebNote(note) {
+      const ctx = ensureAudioContext();
+      if (ctx.state === 'suspended') ctx.resume();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      const filter = ctx.createBiquadFilter();
+      osc.type = midiWaveTypeToOscType(waveTypeEl.value);
+      osc.frequency.value = midiToFrequency(note.midi);
+      filter.type = 'lowpass';
+      filter.frequency.value = 1200;
+      gain.gain.setValueAtTime(0.0001, ctx.currentTime);
+      gain.gain.linearRampToValueAtTime(Math.max(0.04, note.velocity), ctx.currentTime + 0.01);
+      gain.gain.linearRampToValueAtTime(0.0001, ctx.currentTime + Math.max(0.08, note.duration));
+      osc.connect(filter);
+      filter.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + Math.max(0.09, note.duration + 0.06));
+      activeAudio.push({ osc, gain, filter });
+    }
+
     function schedulePlayback(notes) {
       stopPlayback();
       playing = true; playBtn.textContent = 'Pause'; stopBtn.disabled = false; playbackStart = performance.now();
       const playAreaWidth = timeline.scrollWidth || timeline.clientWidth;
-      activeTimers.push(setTimeout(() => stopPlayback(), currentDuration * 1000 + 160));
+      activeTimers.push(setTimeout(() => stopPlayback(), currentDuration * 1000 + 180));
+
       notes.forEach((note, idx) => {
-        activeTimers.push(setTimeout(async () => {
+        activeTimers.push(setTimeout(() => {
           if (!playing) return;
-          await ensureTone();
-          getSynth(note.midi).triggerAttackRelease(note.name, Math.max(0.05, note.duration), Tone.now(), note.velocity);
+          playWebNote(note);
           const block = currentBlocks[idx], trigger = currentTriggers[idx], row = document.getElementById(`row_${idx}`);
-          if (block) block.classList.add('active'); if (trigger) trigger.classList.add('active'); if (row) row.classList.add('active');
-          setTimeout(() => { if (block) block.classList.remove('active'); if (trigger) trigger.classList.remove('active'); if (row) row.classList.remove('active'); }, Math.max(120, note.duration * 1000 * 0.9));
+          if (block) {
+            block.style.left = `${note.time * currentScale}px`;
+            block.classList.add('active');
+          }
+          if (trigger) trigger.classList.add('active');
+          if (row) row.classList.add('active');
+          setTimeout(() => { if (block) block.classList.remove('active'); if (trigger) trigger.classList.remove('active'); if (row) row.classList.remove('active'); }, Math.max(140, note.duration * 1000 * 0.9));
         }, Math.max(0, note.time * 1000)));
       });
-      (function animate(){ if (!playing) return; const elapsed = (performance.now() - playbackStart) / 1000; const left = clamp((elapsed / Math.max(0.001, currentDuration)) * playAreaWidth, 0, playAreaWidth); playhead.style.left = `${left}px`; animationFrame = requestAnimationFrame(animate); })();
+
+      (function animate(){
+        if (!playing) return;
+        const elapsed = (performance.now() - playbackStart) / 1000;
+        const left = clamp((elapsed / Math.max(0.001, currentDuration)) * playAreaWidth, 0, playAreaWidth);
+        playhead.style.left = `${left}px`;
+        animationFrame = requestAnimationFrame(animate);
+      })();
     }
 
     async function buildFromFile(file) {
@@ -655,9 +636,8 @@
       statusEl.textContent = 'Reading MIDI file...';
       const buffer = await file.arrayBuffer();
       midi = new Midi(buffer);
-      const rawNotes = extractNotes(midi);
-      if (!rawNotes.length) { statusEl.innerHTML = '<span class="warn">No notes found in this MIDI.</span>'; return; }
-      const notes = quantizeNotes(rawNotes);
+      const notes = extractNotes(midi);
+      if (!notes.length) { statusEl.innerHTML = '<span class="warn">No notes found in this MIDI.</span>'; return; }
       const totalDuration = Math.max(...notes.map(n => n.time + n.duration));
       currentNotes = notes; currentDuration = totalDuration;
       const exportObj = buildGrabJson(notes, totalDuration, midi.name || file.name.replace(/\.(mid|midi)$/i, ''));
@@ -665,8 +645,8 @@
       const unique = new Set(notes.map(n => n.midi)).size;
       songTitle.textContent = midi.name || file.name;
       songMeta.textContent = `${notes.length} notes · ${unique} unique pitches · ${totalDuration.toFixed(2)}s`;
-      statusEl.innerHTML = `<span class="ok">Ready.</span> Parsed ${notes.length} notes with ${unique} sound nodes, ${notes.length} triggers, and ${notes.length} animated blocks.`;
-      summaryPills.innerHTML = `<span class="pill"><b>${unique}</b> sound nodes</span><span class="pill"><b>${notes.length}</b> triggers</span><span class="pill"><b>${notes.length}</b> animated blocks</span><span class="pill"><b>${totalDuration.toFixed(2)}s</b> duration</span>`;
+      statusEl.innerHTML = `<span class="ok">Ready.</span> Parsed ${notes.length} notes and exported ${notes.length} sounds, ${notes.length} triggers, and ${notes.length} blocks.`;
+      summaryPills.innerHTML = `<span class="pill"><b>${notes.length}</b> sounds</span><span class="pill"><b>${notes.length}</b> triggers</span><span class="pill"><b>${notes.length}</b> blocks</span><span class="pill"><b>100</b> max range</span><span class="pill"><b>100</b> low pass</span>`;
       playBtn.disabled = false; stopBtn.disabled = false; exportStatus.innerHTML = '<span class="ok">Export prepared.</span> The JSON is ready to download or copy.'; setMode('preview');
     }
 
@@ -690,12 +670,12 @@
       renderPreview(demoNotes, exportObj, 3.25);
       songTitle.textContent = 'Demo Pattern'; songMeta.textContent = '6 notes · 3 unique pitches · 3.25s';
       statusEl.innerHTML = '<span class="ok">Demo loaded.</span> Use a real MIDI file to generate your own level.';
-      summaryPills.innerHTML = `<span class="pill"><b>3</b> sound nodes</span><span class="pill"><b>6</b> triggers</span><span class="pill"><b>6</b> animated blocks</span><span class="pill"><b>3.25s</b> duration</span>`;
+      summaryPills.innerHTML = `<span class="pill"><b>6</b> sounds</span><span class="pill"><b>6</b> triggers</span><span class="pill"><b>6</b> blocks</span><span class="pill"><b>100</b> max range</span><span class="pill"><b>100</b> low pass</span>`;
       playBtn.disabled = false; stopBtn.disabled = false; exportStatus.innerHTML = '<span class="ok">Demo export ready.</span>'; setMode('preview');
     });
 
     midiFile.addEventListener('change', async () => { const file = midiFile.files?.[0]; if (file) await buildFromFile(file); });
-    playBtn.addEventListener('click', async () => { if (!currentNotes?.length) return; if (playing) { stopPlayback(); return; } await ensureTone(); schedulePlayback(currentNotes); });
+    playBtn.addEventListener('click', async () => { if (!currentNotes?.length) return; if (playing) { stopPlayback(); return; } schedulePlayback(currentNotes); });
     stopBtn.addEventListener('click', () => stopPlayback());
     downloadJsonBtn.addEventListener('click', () => {
       if (!exportData) return;
