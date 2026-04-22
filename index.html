@@ -1,127 +1,992 @@
-[UPDATED CODE WITH TRUE BLOCK-TO-TRIGGER MAPPING]
-
-// I upgraded your exporter so it now maps:
-// - ONE reusable block per pitch (node)
-// - ONE trigger per note instance
-// - Trigger references the SAME block ID (so repeats reuse it)
-// - Adds timing + trigger logic fields closer to GRAB logic style
-
-// Replace ONLY the buildExport function in your existing file with this:
-
-function buildExport(notes, duration, title = 'MIDI Export') {
-  const pitchMap = new Map();
-  const nodes = [];
-  const triggers = [];
-
-  let minPitch = Infinity;
-  let maxPitch = -Infinity;
-
-  notes.forEach(note => {
-    if (!pitchMap.has(note.midi)) {
-      const laneIndex = pitchMap.size;
-      const nodeId = `node_pitch_${note.midi}`;
-
-      pitchMap.set(note.midi, {
-        laneIndex,
-        nodeId
-      });
-
-      minPitch = Math.min(minPitch, note.midi);
-      maxPitch = Math.max(maxPitch, note.midi);
-
-      nodes.push({
-        id: nodeId,
-        isLocked: false,
-        animations: [],
-        activeAnimation: 0,
-
-        // THIS IS YOUR REAL BLOCK
-        levelNodeStatic: {
-          shape: 1000,
-          material: 8,
-          position: {
-            x: laneIndex * 2.5,
-            y: 0,
-            z: 0
-          },
-          scale: { x: 1, y: 1, z: 1 },
-          rotation: { x: 0, y: 0, z: 0, w: 1 },
-          color1: {
-            r: (note.midi * 5) % 255,
-            g: (note.midi * 9) % 255,
-            b: (note.midi * 13) % 255,
-            a: 1
-          },
-          isNeon: true,
-          isTransparent: false,
-          color2: { r: 255, g: 255, b: 255, a: 1 }
-        }
-      });
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MIDI → GRAB Converter</title>
+  <meta name="description" content="A dark, sleek MIDI to GRAB-style converter with reusable note blocks, animated triggers, synced playback, and JSON export." />
+  <style>
+    :root {
+      --bg: #050608;
+      --bg2: #0b0f14;
+      --panel: rgba(12, 16, 24, 0.84);
+      --panel-strong: rgba(8, 12, 18, 0.96);
+      --line: rgba(255,255,255,0.08);
+      --text: #ecf4ff;
+      --muted: #8c98aa;
+      --accent: #7cf6ff;
+      --accent2: #9d7cff;
+      --good: #39d98a;
+      --bad: #ff6b88;
+      --warn: #ffd166;
+      --shadow: 0 24px 90px rgba(0, 0, 0, .58);
+      --radius: 24px;
     }
-  });
 
-  // TRUE TRIGGER SYSTEM
-  notes.forEach((note, i) => {
-    const pitchData = pitchMap.get(note.midi);
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 15% 15%, rgba(124,246,255,0.13), transparent 24%),
+        radial-gradient(circle at 80% 10%, rgba(157,124,255,0.14), transparent 24%),
+        radial-gradient(circle at 50% 100%, rgba(57,217,138,0.10), transparent 20%),
+        linear-gradient(180deg, var(--bg), var(--bg2));
+      overflow-x: hidden;
+    }
 
-    triggers.push({
-      id: `trigger_${i}`,
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+      background-size: 58px 58px;
+      mask-image: radial-gradient(circle at center, black 42%, transparent 92%);
+      opacity: .34;
+    }
 
-      // TIMING
-      startTime: note.time,
-      duration: note.duration,
+    .wrap {
+      min-height: 100vh;
+      padding: 26px;
+      display: grid;
+      place-items: center;
+    }
 
-      // LINK TO BLOCK
-      targetNodeId: pitchData.nodeId,
+    .shell {
+      width: min(1280px, 100%);
+      display: grid;
+      grid-template-columns: 1.08fr .92fr;
+      gap: 20px;
+    }
 
-      // ACTION LOGIC (GRAB-style behavior)
-      actions: [
-        {
-          type: "PLAY_SOUND",
-          pitch: note.midi,
-          velocity: note.velocity
-        },
-        {
-          type: "ANIMATE",
-          animation: "pulse",
-          duration: note.duration
+    .hero, .panel {
+      border: 1px solid var(--line);
+      background: var(--panel);
+      backdrop-filter: blur(18px);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .hero {
+      min-height: 720px;
+      padding: 34px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .glow {
+      position: absolute;
+      width: 420px;
+      height: 420px;
+      right: -140px;
+      bottom: -120px;
+      background: radial-gradient(circle, rgba(124,246,255,0.2), transparent 68%);
+      filter: blur(18px);
+      animation: drift 10s ease-in-out infinite alternate;
+      pointer-events: none;
+    }
+
+    @keyframes drift {
+      from { transform: translate3d(0,0,0) scale(1); }
+      to { transform: translate3d(-26px,-20px,0) scale(1.1); }
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      width: fit-content;
+      padding: 9px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(124,246,255,0.24);
+      background: rgba(124,246,255,0.08);
+      color: #c4fbff;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      font-size: 12px;
+    }
+
+    h1 {
+      margin: 18px 0 12px;
+      font-size: clamp(42px, 6vw, 78px);
+      line-height: .92;
+      letter-spacing: -0.06em;
+    }
+
+    .desc {
+      color: var(--muted);
+      font-size: 16px;
+      line-height: 1.75;
+      max-width: 60ch;
+      margin: 0 0 22px;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+
+    .stat {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 14px;
+      min-height: 92px;
+    }
+
+    .stat b { display:block; font-size: 18px; margin-bottom: 4px; }
+    .stat span { color: var(--muted); font-size: 12px; line-height: 1.45; }
+
+    .hero-bottom {
+      margin-top: 20px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.65;
+    }
+
+    .panel {
+      min-height: 720px;
+      padding: 22px;
+      display: grid;
+      grid-template-rows: auto auto auto 1fr auto;
+      gap: 14px;
+    }
+
+    .tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 8px;
+    }
+
+    .tab {
+      border: 0;
+      border-radius: 14px;
+      padding: 13px 14px;
+      background: transparent;
+      color: var(--muted);
+      font-weight: 800;
+      cursor: pointer;
+      transition: .18s ease;
+    }
+
+    .tab.active {
+      color: var(--text);
+      background: linear-gradient(135deg, rgba(124,246,255,0.18), rgba(157,124,255,0.18));
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08);
+    }
+
+    .section { display:none; flex-direction: column; gap: 12px; }
+    .section.active { display:flex; }
+
+    label {
+      display:block;
+      font-size: 13px;
+      color: #c9d4e5;
+      margin: 0 0 8px;
+    }
+
+    input[type="file"], input[type="text"], textarea, select {
+      width: 100%;
+      border-radius: 16px;
+      border: 1px solid var(--line);
+      background: rgba(4, 8, 12, 0.82);
+      color: var(--text);
+      padding: 14px 16px;
+      outline: none;
+      font: inherit;
+    }
+
+    textarea { min-height: 135px; resize: vertical; }
+
+    input:focus, textarea:focus, select:focus {
+      border-color: rgba(124,246,255,0.42);
+      box-shadow: 0 0 0 4px rgba(124,246,255,0.08);
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+    }
+
+    .row-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    .btn {
+      border: 0;
+      border-radius: 16px;
+      padding: 14px 18px;
+      font-weight: 900;
+      cursor: pointer;
+      color: #001018;
+      background: linear-gradient(135deg, #7cf6ff, #9d7cff);
+      box-shadow: 0 10px 30px rgba(124,246,255,.16);
+      transition: transform .16s ease, filter .16s ease, opacity .16s ease;
+      white-space: nowrap;
+    }
+
+    .btn:hover { transform: translateY(-1px); filter: brightness(1.05); }
+    .btn:disabled { opacity: .55; cursor: not-allowed; transform: none; }
+    .ghost {
+      color: var(--text);
+      background: rgba(255,255,255,0.06);
+      box-shadow: none;
+      border: 1px solid var(--line);
+    }
+
+    .output {
+      border-radius: 18px;
+      border: 1px solid var(--line);
+      background: var(--panel-strong);
+      padding: 14px 16px;
+      min-height: 74px;
+      color: var(--muted);
+      line-height: 1.55;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .ok { color: #a7f3d0; }
+    .bad { color: #fecaca; }
+    .warn { color: #fde68a; }
+
+    .small {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.5;
+      margin: 0;
+    }
+
+    .mono {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 12px;
+      color: #d6f5ff;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 10px 12px;
+      overflow-x: auto;
+    }
+
+    .preview-wrap {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+
+    .preview-head {
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .preview-card {
+      position: relative;
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      background: rgba(255,255,255,0.03);
+      overflow: hidden;
+      min-height: 340px;
+    }
+
+    .preview-bg {
+      position:absolute;
+      inset:0;
+      background: linear-gradient(180deg, rgba(124,246,255,0.08), rgba(157,124,255,0.08));
+    }
+
+    .timeline-wrap {
+      position: relative;
+      margin: 18px;
+      height: 240px;
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,0.08);
+      background:
+        linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px),
+        rgba(0,0,0,0.22);
+      background-size: 100% 24px, 40px 100%, auto;
+      overflow: auto;
+    }
+
+    .timeline {
+      position: relative;
+      min-height: 100%;
+      width: 100%;
+    }
+
+    .lane-line {
+      position:absolute;
+      left:0; right:0;
+      height:1px;
+      background: rgba(255,255,255,0.03);
+    }
+
+    .note-block {
+      position: absolute;
+      border-radius: 10px;
+      opacity: .94;
+      box-shadow: 0 0 18px rgba(124,246,255,0.12);
+      transform-origin: center;
+      transition: transform .08s linear, filter .08s linear, opacity .08s linear;
+    }
+
+    .note-block.active {
+      transform: scaleY(1.08) scaleX(1.02);
+      filter: brightness(1.35) saturate(1.2);
+      opacity: 1;
+      animation: pulse .38s ease-out 1;
+    }
+
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(124,246,255,0.22); }
+      100% { box-shadow: 0 0 0 18px rgba(124,246,255,0); }
+    }
+
+    .playhead {
+      position:absolute;
+      top:0;
+      bottom:0;
+      width: 2px;
+      background: linear-gradient(180deg, rgba(124,246,255,0), rgba(124,246,255,1), rgba(157,124,255,1), rgba(124,246,255,0));
+      box-shadow: 0 0 20px rgba(124,246,255,0.4);
+      left: 0;
+      z-index: 10;
+    }
+
+    .legend {
+      display:flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items:center;
+      padding: 0 18px 18px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .chip {
+      display:inline-flex;
+      align-items:center;
+      gap: 8px;
+      padding: 8px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.03);
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      background: var(--accent);
+      box-shadow: 0 0 10px rgba(124,246,255,0.45);
+    }
+
+    .list {
+      max-height: 180px;
+      overflow:auto;
+      border:1px solid var(--line);
+      border-radius: 18px;
+      background: rgba(255,255,255,0.03);
+      padding: 10px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .list-item {
+      display:grid;
+      grid-template-columns: 70px 1fr 86px;
+      gap: 10px;
+      padding: 8px 6px;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      align-items:center;
+    }
+    .list-item:last-child { border-bottom: 0; }
+    .list-item.active { color: var(--text); }
+
+    .trigger-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin: 4px 6px 0 0;
+      padding: 7px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.03);
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    @media (max-width: 1100px) {
+      .shell { grid-template-columns: 1fr; }
+      .hero, .panel { min-height: auto; }
+    }
+
+    @media (max-width: 720px) {
+      .stats { grid-template-columns: 1fr 1fr; }
+      .row, .row-3 { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="shell">
+      <section class="hero">
+        <div class="glow"></div>
+        <div>
+          <div class="badge">midi · grab converter</div>
+          <h1>Turn MIDI<br>into GRAB.</h1>
+          <p class="desc">
+            Drop in a MIDI file and this page will parse the notes, reuse repeated pitches as shared blocks,
+            generate animated triggers, and export a GRAB-style JSON level. Repeated notes retrigger the same pitch sound,
+            while the preview animates each note block at the correct time.
+          </p>
+          <div class="stats">
+            <div class="stat"><b>Preview</b><span>Piano-roll timeline with moving playhead, active blocks, and trigger flashes.</span></div>
+            <div class="stat"><b>Reuse</b><span>Repeated pitches share one block node, keeping exports compact.</span></div>
+            <div class="stat"><b>Trigger</b><span>Every note onset creates a trigger event that fires sound and animation.</span></div>
+            <div class="stat"><b>Export</b><span>Download a JSON structure with levelNodes and triggers ready to adapt.</span></div>
+          </div>
+        </div>
+        <div class="hero-bottom">
+          GRAB levels are stored as .level protobuf files, so this page exports a structured JSON build that matches the logic flow and can be adapted to a binary writer later. citeturn1search2
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="tabs">
+          <button class="tab active" id="tabConvert" type="button">Convert</button>
+          <button class="tab" id="tabPreview" type="button">Preview</button>
+          <button class="tab" id="tabExport" type="button">Export</button>
+        </div>
+
+        <div class="section active" id="convertSection">
+          <div>
+            <label for="midiFile">Upload MIDI</label>
+            <input type="file" id="midiFile" accept=".mid,.midi" />
+          </div>
+          <div class="row-3">
+            <div>
+              <label for="noteScale">Timeline scale</label>
+              <input type="text" id="noteScale" value="160" />
+            </div>
+            <div>
+              <label for="pitchGap">Pitch gap</label>
+              <input type="text" id="pitchGap" value="22" />
+            </div>
+            <div>
+              <label for="voiceMode">Sound mode</label>
+              <select id="voiceMode">
+                <option value="poly">Poly synth</option>
+                <option value="mono">Mono retrigger</option>
+              </select>
+            </div>
+          </div>
+          <div class="row">
+            <button class="btn" id="buildBtn" type="button">Build Preview</button>
+            <button class="btn ghost" id="demoBtn" type="button">Load Demo Look</button>
+          </div>
+          <p class="small">Notes are parsed with <span class="mono" style="display:inline; padding:2px 6px;">@tonejs/midi</span> and playback uses Tone.js. citeturn1search15turn1search3</p>
+          <div class="output" id="status">Ready.</div>
+        </div>
+
+        <div class="section" id="previewSection">
+          <div class="preview-head">
+            <div>
+              <strong id="songTitle">No MIDI loaded</strong><br>
+              <span class="small" id="songMeta">Upload a file to generate the timeline.</span>
+            </div>
+            <div class="row" style="width:min(340px,100%);">
+              <button class="btn" id="playBtn" type="button" disabled>Play</button>
+              <button class="btn ghost" id="stopBtn" type="button" disabled>Stop</button>
+            </div>
+          </div>
+
+          <div class="preview-wrap">
+            <div class="preview-card">
+              <div class="preview-bg" id="previewBg"></div>
+              <div class="timeline-wrap">
+                <div class="timeline" id="timeline">
+                  <div class="playhead" id="playhead"></div>
+                </div>
+              </div>
+              <div class="legend" id="legend">
+                <span class="chip"><span class="dot"></span> Active note pulses on trigger</span>
+                <span class="chip">Repeated pitches reuse the same lane</span>
+                <span class="chip">Triggers fire at note start</span>
+              </div>
+            </div>
+            <div class="list" id="noteList">No notes yet.</div>
+          </div>
+        </div>
+
+        <div class="section" id="exportSection">
+          <div>
+            <label for="exportBox">Export JSON</label>
+            <textarea id="exportBox" spellcheck="false" placeholder="Your exported GRAB-style JSON will appear here."></textarea>
+          </div>
+          <div class="row">
+            <button class="btn" id="downloadJsonBtn" type="button" disabled>Download JSON</button>
+            <button class="btn ghost" id="copyJsonBtn" type="button" disabled>Copy JSON</button>
+          </div>
+          <p class="small">The export includes reusable pitch blocks, note triggers, and playback timing. A true binary <span class="mono" style="display:inline; padding:2px 6px;">.level</span> writer would need the exact protobuf schema. citeturn1search2</p>
+          <div class="output" id="exportStatus">Ready.</div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/tone@14.8.49/build/Tone.js"></script>
+  <script src="https://unpkg.com/@tonejs/midi@2.0.28/build/Midi.js"></script>
+  <script>
+    const tabConvert = document.getElementById('tabConvert');
+    const tabPreview = document.getElementById('tabPreview');
+    const tabExport = document.getElementById('tabExport');
+    const convertSection = document.getElementById('convertSection');
+    const previewSection = document.getElementById('previewSection');
+    const exportSection = document.getElementById('exportSection');
+
+    const midiFile = document.getElementById('midiFile');
+    const statusEl = document.getElementById('status');
+    const noteScaleEl = document.getElementById('noteScale');
+    const pitchGapEl = document.getElementById('pitchGap');
+    const voiceModeEl = document.getElementById('voiceMode');
+    const buildBtn = document.getElementById('buildBtn');
+    const demoBtn = document.getElementById('demoBtn');
+    const playBtn = document.getElementById('playBtn');
+    const stopBtn = document.getElementById('stopBtn');
+    const songTitle = document.getElementById('songTitle');
+    const songMeta = document.getElementById('songMeta');
+    const previewBg = document.getElementById('previewBg');
+    const timeline = document.getElementById('timeline');
+    const playhead = document.getElementById('playhead');
+    const noteList = document.getElementById('noteList');
+    const exportBox = document.getElementById('exportBox');
+    const exportStatus = document.getElementById('exportStatus');
+    const downloadJsonBtn = document.getElementById('downloadJsonBtn');
+    const copyJsonBtn = document.getElementById('copyJsonBtn');
+
+    let midi = null;
+    let currentNotes = [];
+    let exportData = null;
+    let toneReady = false;
+    let playing = false;
+    let activeTimers = [];
+    let animationFrame = 0;
+    let synthPool = {};
+    let playbackStart = 0;
+    let currentDuration = 0;
+    let currentScale = 160;
+    let currentPitchGap = 22;
+    let currentBlocks = [];
+
+    function setMode(mode) {
+      [tabConvert, tabPreview, tabExport].forEach(t => t.classList.remove('active'));
+      [convertSection, previewSection, exportSection].forEach(s => s.classList.remove('active'));
+      if (mode === 'convert') {
+        tabConvert.classList.add('active');
+        convertSection.classList.add('active');
+      } else if (mode === 'preview') {
+        tabPreview.classList.add('active');
+        previewSection.classList.add('active');
+      } else {
+        tabExport.classList.add('active');
+        exportSection.classList.add('active');
+      }
+    }
+
+    tabConvert.addEventListener('click', () => setMode('convert'));
+    tabPreview.addEventListener('click', () => setMode('preview'));
+    tabExport.addEventListener('click', () => setMode('export'));
+
+    function clamp(n, min, max) { return Math.max(min, Math.min(max, n)); }
+    function escapeHtml(text) {
+      return String(text)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;');
+    }
+    function midiToNoteName(num) {
+      const names = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+      const octave = Math.floor(num / 12) - 1;
+      return `${names[((num % 12) + 12) % 12]}${octave}`;
+    }
+    function colorForPitch(pitch) {
+      const hue = (pitch * 7) % 360;
+      return `hsl(${hue} 92% 62%)`;
+    }
+    function uid(prefix, value) { return `${prefix}_${value}`.replace(/[^a-zA-Z0-9_\-]/g, '_'); }
+
+    function extractNotes(midiObj) {
+      const all = [];
+      midiObj.tracks.forEach((track, trackIndex) => {
+        track.notes.forEach((note, noteIndex) => {
+          all.push({
+            midi: note.midi,
+            name: note.name || midiToNoteName(note.midi),
+            time: note.time,
+            duration: note.duration,
+            velocity: note.velocity ?? 1,
+            trackIndex,
+            noteIndex
+          });
+        });
+      });
+      all.sort((a, b) => a.time - b.time || a.midi - b.midi || a.noteIndex - b.noteIndex);
+      return all;
+    }
+
+    function buildExport(notes, duration, title = 'MIDI Export') {
+      const pitchMap = new Map();
+      const nodes = [];
+      const triggers = [];
+      let minPitch = Infinity;
+      let maxPitch = -Infinity;
+
+      notes.forEach((note) => {
+        if (!pitchMap.has(note.midi)) {
+          const laneIndex = pitchMap.size;
+          const nodeId = `node_pitch_${note.midi}`;
+          pitchMap.set(note.midi, { laneIndex, nodeId });
+          minPitch = Math.min(minPitch, note.midi);
+          maxPitch = Math.max(maxPitch, note.midi);
+          const c = colorForPitch(note.midi).match(/\d+/g).slice(0, 3).map(Number);
+          nodes.push({
+            id: nodeId,
+            isLocked: false,
+            animations: [
+              { name: 'pulse', type: 'scale', amount: 1.08 },
+              { name: 'flash', type: 'glow', amount: 1.0 }
+            ],
+            activeAnimation: 0,
+            notePitch: note.midi,
+            noteName: note.name,
+            laneIndex,
+            levelNodeStatic: {
+              shape: 1000,
+              material: 8,
+              position: { x: laneIndex * 2.5, y: 0, z: 0 },
+              scale: { x: 1, y: 1, z: 1 },
+              rotation: { x: 0, y: 0, z: 0, w: 1 },
+              color1: { r: c[0], g: c[1], b: c[2], a: 1 },
+              isNeon: true,
+              isTransparent: false,
+              color2: { r: 255, g: 255, b: 255, a: 1 }
+            }
+          });
         }
-      ],
+      });
 
-      // IMPORTANT: THIS MAKES REPEATS WORK
-      retrigger: true
+      notes.forEach((note, i) => {
+        const pitchData = pitchMap.get(note.midi);
+        triggers.push({
+          id: `trigger_${i}`,
+          startTime: note.time,
+          duration: note.duration,
+          targetNodeId: pitchData.nodeId,
+          pitch: note.midi,
+          note: note.name,
+          velocity: note.velocity,
+          laneIndex: pitchData.laneIndex,
+          retrigger: true,
+          actions: [
+            { type: 'PLAY_SOUND', pitch: note.midi, velocity: note.velocity },
+            { type: 'ANIMATE', animation: 'pulse', duration: note.duration },
+            { type: 'FLASH', animation: 'glow', duration: Math.max(0.12, note.duration * 0.5) }
+          ]
+        });
+      });
+
+      return {
+        version: 3,
+        meta: {
+          title,
+          duration,
+          noteCount: notes.length,
+          uniquePitches: pitchMap.size,
+          pitchRange: pitchMap.size ? { min: minPitch, max: maxPitch } : null,
+          createdAt: new Date().toISOString()
+        },
+        levelNodes: nodes,
+        triggers,
+        notes: notes.map(n => ({
+          midi: n.midi,
+          note: n.name,
+          time: n.time,
+          duration: n.duration,
+          velocity: n.velocity,
+          laneIndex: pitchMap.get(n.midi).laneIndex,
+          targetNodeId: pitchMap.get(n.midi).nodeId
+        }))
+      };
+    }
+
+    function clearTimeline() {
+      timeline.innerHTML = '<div class="playhead" id="playhead"></div>';
+      timeline.appendChild(playhead);
+    }
+
+    function renderPreview(notes, exportObj, totalDuration) {
+      currentScale = clamp(Number(noteScaleEl.value || 160), 20, 400);
+      currentPitchGap = clamp(Number(pitchGapEl.value || 22), 14, 40);
+      currentDuration = totalDuration;
+      const minPitch = Math.min(...notes.map(n => n.midi));
+      const maxPitch = Math.max(...notes.map(n => n.midi));
+      const laneCount = (maxPitch - minPitch + 1);
+      const width = Math.max(860, totalDuration * currentScale + 180);
+      const height = Math.max(240, laneCount * currentPitchGap + 60);
+
+      clearTimeline();
+      timeline.style.width = `${width}px`;
+      timeline.style.height = `${height}px`;
+
+      // grid lines
+      for (let i = 0; i <= laneCount; i++) {
+        const line = document.createElement('div');
+        line.className = 'lane-line';
+        line.style.top = `${i * currentPitchGap + 24}px`;
+        timeline.appendChild(line);
+      }
+
+      currentBlocks = [];
+      notes.forEach((note, idx) => {
+        const top = (maxPitch - note.midi) * currentPitchGap + 14;
+        const left = note.time * currentScale;
+        const widthPx = Math.max(8, note.duration * currentScale);
+        const color = colorForPitch(note.midi);
+        const block = document.createElement('div');
+        block.className = 'note-block';
+        block.id = `note_${idx}`;
+        block.style.left = `${left}px`;
+        block.style.top = `${top}px`;
+        block.style.width = `${widthPx}px`;
+        block.style.height = `${Math.max(12, currentPitchGap - 7)}px`;
+        block.style.background = `linear-gradient(135deg, ${color}, rgba(255,255,255,0.30))`;
+        block.dataset.start = String(note.time);
+        block.dataset.end = String(note.time + note.duration);
+        block.dataset.midi = String(note.midi);
+        timeline.appendChild(block);
+        currentBlocks.push(block);
+      });
+
+      noteList.innerHTML = notes.map((n, i) => {
+        const lane = exportObj.notes[i].laneIndex;
+        return `
+          <div class="list-item" id="row_${i}">
+            <div class="mono">${n.time.toFixed(2)}s</div>
+            <div>${escapeHtml(n.name)} · MIDI ${n.midi}<br><span class="small">Lane ${lane} · ${n.duration.toFixed(2)}s</span></div>
+            <div class="mono">${n.velocity.toFixed(2)}</div>
+          </div>`;
+      }).join('');
+
+      previewBg.style.background = `radial-gradient(circle at 50% 0%, rgba(124,246,255,0.12), transparent 35%), radial-gradient(circle at 70% 100%, rgba(157,124,255,0.12), transparent 35%), linear-gradient(180deg, rgba(124,246,255,0.06), rgba(0,0,0,0.15))`;
+      exportBox.value = JSON.stringify(exportObj, null, 2);
+      exportData = exportObj;
+      downloadJsonBtn.disabled = false;
+      copyJsonBtn.disabled = false;
+    }
+
+    async function ensureTone() {
+      if (!toneReady) {
+        await Tone.start();
+        toneReady = true;
+      }
+    }
+
+    function getSynth(midiPitch) {
+      const mode = voiceModeEl.value;
+      const key = `${mode}_${midiPitch}`;
+      if (!synthPool[key]) {
+        if (mode === 'mono') {
+          synthPool[key] = new Tone.MonoSynth({
+            oscillator: { type: 'square' },
+            envelope: { attack: 0.005, decay: 0.08, sustain: 0.12, release: 0.12 },
+            filterEnvelope: { attack: 0.01, decay: 0.06, sustain: 0.08, release: 0.12, baseFrequency: 300, octaves: 2.4 }
+          }).toDestination();
+        } else {
+          synthPool[key] = new Tone.PolySynth(Tone.Synth, {
+            oscillator: { type: 'sawtooth' },
+            envelope: { attack: 0.005, decay: 0.08, sustain: 0.18, release: 0.12 }
+          }).toDestination();
+        }
+      }
+      return synthPool[key];
+    }
+
+    function stopPlayback() {
+      playing = false;
+      activeTimers.forEach(clearTimeout);
+      activeTimers = [];
+      if (animationFrame) cancelAnimationFrame(animationFrame);
+      animationFrame = 0;
+      document.querySelectorAll('.note-block.active').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.list-item.active').forEach(el => el.classList.remove('active'));
+      playhead.style.left = '0px';
+      playBtn.textContent = 'Play';
+      stopBtn.disabled = true;
+    }
+
+    function schedulePlayback(notes) {
+      stopPlayback();
+      playing = true;
+      playBtn.textContent = 'Pause';
+      stopBtn.disabled = false;
+      playbackStart = performance.now();
+      const playAreaWidth = timeline.scrollWidth || timeline.clientWidth;
+
+      const endTimer = setTimeout(() => stopPlayback(), currentDuration * 1000 + 140);
+      activeTimers.push(endTimer);
+
+      notes.forEach((note, idx) => {
+        const on = setTimeout(async () => {
+          if (!playing) return;
+          await ensureTone();
+          const synth = getSynth(note.midi);
+          const now = Tone.now();
+          if (voiceModeEl.value === 'mono') {
+            synth.triggerAttackRelease(note.name, Math.max(0.05, note.duration), now, note.velocity);
+          } else {
+            synth.triggerAttackRelease(note.name, Math.max(0.05, note.duration), now, note.velocity);
+          }
+
+          const el = currentBlocks[idx];
+          if (el) {
+            el.classList.add('active');
+            const row = document.getElementById(`row_${idx}`);
+            if (row) row.classList.add('active');
+            setTimeout(() => {
+              el.classList.remove('active');
+              if (row) row.classList.remove('active');
+            }, Math.max(120, note.duration * 1000 * 0.9));
+          }
+        }, Math.max(0, note.time * 1000));
+        activeTimers.push(on);
+      });
+
+      function animate() {
+        if (!playing) return;
+        const elapsed = (performance.now() - playbackStart) / 1000;
+        const left = clamp((elapsed / Math.max(0.001, currentDuration)) * playAreaWidth, 0, playAreaWidth);
+        playhead.style.left = `${left}px`;
+        animationFrame = requestAnimationFrame(animate);
+      }
+      animate();
+    }
+
+    async function buildFromFile(file) {
+      if (!file) return;
+      statusEl.textContent = 'Reading MIDI file...';
+      const buffer = await file.arrayBuffer();
+      midi = new Midi(buffer);
+      const notes = extractNotes(midi);
+      if (!notes.length) {
+        statusEl.innerHTML = '<span class="warn">No notes found in this MIDI.</span>';
+        return;
+      }
+
+      const totalDuration = Math.max(...notes.map(n => n.time + n.duration));
+      currentNotes = notes;
+      const exportObj = buildExport(notes, totalDuration, midi.name || file.name.replace(/\.(mid|midi)$/i, ''));
+      renderPreview(notes, exportObj, totalDuration);
+
+      const unique = new Set(notes.map(n => n.midi)).size;
+      songTitle.textContent = midi.name || file.name;
+      songMeta.textContent = `${notes.length} notes · ${unique} unique pitches · ${totalDuration.toFixed(2)}s`;
+      statusEl.innerHTML = `<span class="ok">Ready.</span> Parsed ${notes.length} notes with ${unique} reusable pitch lanes and ${notes.length} triggers.`;
+      playBtn.disabled = false;
+      stopBtn.disabled = false;
+      exportStatus.innerHTML = '<span class="ok">Export prepared.</span> The JSON is ready to download or copy.';
+      setMode('preview');
+    }
+
+    buildBtn.addEventListener('click', async () => {
+      const file = midiFile.files?.[0];
+      if (!file) {
+        statusEl.innerHTML = '<span class="bad">Please upload a MIDI file first.</span>';
+        return;
+      }
+      await buildFromFile(file);
     });
-  });
 
-  return {
-    version: 2,
+    demoBtn.addEventListener('click', () => {
+      const demoNotes = [
+        { midi: 60, name: 'C4', time: 0.00, duration: 0.50, velocity: 0.90 },
+        { midi: 64, name: 'E4', time: 0.50, duration: 0.50, velocity: 0.90 },
+        { midi: 67, name: 'G4', time: 1.00, duration: 0.75, velocity: 0.90 },
+        { midi: 60, name: 'C4', time: 1.75, duration: 0.40, velocity: 0.90 },
+        { midi: 64, name: 'E4', time: 2.15, duration: 0.40, velocity: 0.90 },
+        { midi: 67, name: 'G4', time: 2.55, duration: 0.70, velocity: 0.90 }
+      ];
+      const exportObj = buildExport(demoNotes, 3.25, 'Demo Pattern');
+      currentNotes = demoNotes;
+      currentDuration = 3.25;
+      renderPreview(demoNotes, exportObj, 3.25);
+      songTitle.textContent = 'Demo Pattern';
+      songMeta.textContent = '6 notes · 3 unique pitches · 3.25s';
+      statusEl.innerHTML = '<span class="ok">Demo loaded.</span> Use a real MIDI file to generate your own level.';
+      playBtn.disabled = false;
+      stopBtn.disabled = false;
+      exportStatus.innerHTML = '<span class="ok">Demo export ready.</span>';
+      setMode('preview');
+    });
 
-    meta: {
-      title,
-      duration,
-      noteCount: notes.length,
-      uniquePitches: pitchMap.size,
-      pitchRange: { min: minPitch, max: maxPitch }
-    },
+    midiFile.addEventListener('change', async () => {
+      const file = midiFile.files?.[0];
+      if (file) await buildFromFile(file);
+    });
 
-    // CORE STRUCTURE
-    levelNodes: nodes,
-    triggers: triggers
-  };
-}
+    playBtn.addEventListener('click', async () => {
+      if (!currentNotes?.length) return;
+      if (playing) {
+        stopPlayback();
+        return;
+      }
+      await ensureTone();
+      schedulePlayback(currentNotes);
+    });
 
+    stopBtn.addEventListener('click', () => {
+      stopPlayback();
+    });
 
-// WHAT THIS FIXES:
-// - Same note (ex: C4 repeated) now reuses SAME block
-// - Each note creates a trigger instead of a new block
-// - Trigger explicitly references block by ID
-// - Trigger includes play + animation actions
-// - Retrigger is enabled so fast notes don't cut off
+    downloadJsonBtn.addEventListener('click', () => {
+      if (!exportData) return;
+      const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${(exportData.meta?.title || 'midi_grab').replace(/[^a-zA-Z0-9_\-]+/g, '_')}.json`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      exportStatus.innerHTML = '<span class="ok">JSON downloaded.</span>';
+    });
 
-
-// OPTIONAL NEXT UPGRADE (ask me if you want):
-// - Convert this JSON → REAL .level binary file
-// - Add 3D spacing (timeline in Z axis like real GRAB maps)
-// - Add per-note instruments
-// - Add velocity → block brightness
-// - Add BPM grid snapping
+    copyJsonBtn.addEventListener('click', async () => {
+      if (!exportData) return;
+      await navigator.clipboard.writeText(JSON.stringify(exportData, null, 2));
+      exportStatus.innerHTML = '<span class="ok">Copied to clipboard.</span>';
+    });
+  </script>
+</body>
+</html>
