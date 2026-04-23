@@ -557,12 +557,12 @@ function buildLevel() {
   // Lay them out in a row along the X axis.
   // The animated block will snap to (trigX, trigY, 0) for each note.
   // Z stays 0 for all triggers and sounds (they're stationary).
+  const trigZ = -5; // triggers sit 5m in front; block parks at z=500 behind them
   const trigPositions = new Map(); // midi → {x, y, z}
   pitches.forEach((m, idx) => {
-    // Spread horizontally, small Y offset by octave for readability
     const x = (idx - (P-1)/2) * spacing;
     const y = 0;
-    const z = 0;
+    const z = trigZ;
     trigPositions.set(m, {x, y, z});
   });
 
@@ -649,8 +649,12 @@ function buildLevel() {
   // The GRAB animation system interpolates between keyframes, so
   // using a tiny epsilon gap ensures a clean collision per note.
 
-  const AWAY_Z = 500;    // park far behind on Z axis; triggers are all at z=0
+  const AWAY_Z = 500;    // park far on Z axis away from triggers (which are all at z=0)
   const SNAP_DT = 0.016; // ~1 frame at 60fps
+
+  // Static position MUST be {0,0,0} so keyframe positions equal world positions,
+  // regardless of whether GRAB treats keyframes as absolute or relative offsets.
+  // If relative from {0,0,0}, the offsets ARE the world positions. ✓
 
   // Build the keyframe list
   const frames = [];
@@ -703,7 +707,7 @@ function buildLevel() {
     levelNodeStatic: {
       shape:    1000,
       material: 8,
-      position: { x: 0, y: 0, z: AWAY_Z },
+      position: { x: 0, y: 0, z: 0 },
       scale:    { x: 1.0, y: 1.0, z: 1.0 },
       rotation: { x:0, y:0, z:0, w:1 },
       isNeon:        true,
