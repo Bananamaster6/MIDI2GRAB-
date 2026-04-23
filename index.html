@@ -29,16 +29,11 @@ body::before{
     linear-gradient(90deg,rgba(77,255,200,.028) 1px,transparent 1px);
   background-size:52px 52px;
 }
-/* ambient glow */
 .orb{position:fixed;border-radius:50%;filter:blur(80px);pointer-events:none;z-index:0;animation:orbmove 20s ease-in-out infinite alternate}
 .orb1{width:500px;height:500px;background:rgba(77,255,200,.07);top:-200px;left:-150px}
 .orb2{width:400px;height:400px;background:rgba(139,111,255,.06);bottom:-150px;right:-100px}
 @keyframes orbmove{from{transform:translate(0,0) scale(1)}to{transform:translate(40px,30px) scale(1.08)}}
-
-/* ── PAGE ── */
 .page{position:relative;z-index:1;max-width:1100px;margin:0 auto;padding:28px 20px 80px;display:flex;flex-direction:column;gap:20px}
-
-/* ── HEADER ── */
 .hdr{
   background:var(--s1);border:1px solid var(--b);border-radius:18px;
   padding:32px 36px;display:flex;align-items:flex-start;justify-content:space-between;
@@ -56,11 +51,7 @@ body::before{
 .stat-card{background:rgba(255,255,255,.04);border:1px solid var(--b);border-radius:14px;padding:12px 16px;text-align:right}
 .stat-v{font-family:var(--mono);font-size:24px;color:var(--a);line-height:1;margin-bottom:3px}
 .stat-l{font-size:10px;color:var(--m);letter-spacing:.08em;text-transform:uppercase}
-
-/* ── MAIN GRID ── */
 .grid{display:grid;grid-template-columns:380px 1fr;gap:18px;align-items:start}
-
-/* ── PANEL ── */
 .panel{background:var(--s1);border:1px solid var(--b);border-radius:18px;overflow:hidden}
 .ph{display:flex;align-items:center;gap:8px;padding:13px 18px;background:var(--s2);border-bottom:1px solid var(--b)}
 .ph-dots{display:flex;gap:5px}
@@ -68,8 +59,6 @@ body::before{
 .da{background:#ff5f57}.db{background:#febc2e}.dc{background:#28c840}
 .ph-title{font-family:var(--mono);font-size:11px;color:var(--m);letter-spacing:.08em}
 .pb{padding:18px;display:flex;flex-direction:column;gap:13px}
-
-/* ── FIELD ── */
 .field{display:flex;flex-direction:column;gap:7px}
 .field>label{font-family:var(--mono);font-size:10px;color:var(--a);letter-spacing:.1em;text-transform:uppercase;display:flex;align-items:center;gap:8px}
 .field>label::after{content:'';flex:1;height:1px;background:var(--b)}
@@ -88,8 +77,6 @@ input:focus,select:focus{border-color:var(--a);box-shadow:0 0 0 3px rgba(77,255,
 select option{background:var(--s2)}
 .r2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .r3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
-
-/* ── BUTTONS ── */
 .btn{border:none;border-radius:11px;padding:11px 18px;font-family:var(--ui);font-size:13px;font-weight:700;cursor:pointer;transition:all .17s;display:inline-flex;align-items:center;gap:7px;white-space:nowrap}
 .btn-p{background:var(--a);color:#040f0a;box-shadow:0 0 20px rgba(77,255,200,.18)}
 .btn-p:hover{filter:brightness(1.08);transform:translateY(-1px);box-shadow:0 0 30px rgba(77,255,200,.3)}
@@ -101,20 +88,14 @@ select option{background:var(--s2)}
 .btn-d{background:transparent;color:var(--err);border:1px solid rgba(255,77,106,.3)}
 .btn-d:hover{background:rgba(255,77,106,.1)}
 .btn-row{display:flex;gap:9px;flex-wrap:wrap}
-
-/* ── STATUS ── */
 .status{border-radius:11px;border:1px solid var(--b);background:var(--s2);padding:11px 13px;font-family:var(--mono);font-size:11px;color:var(--m);min-height:42px;line-height:1.6;transition:all .2s}
 .status.ok{border-color:rgba(77,255,200,.3);color:var(--ok)}
 .status.err{border-color:rgba(255,77,106,.3);color:var(--err)}
 .status.warn{border-color:rgba(255,200,77,.3);color:var(--warn)}
 .status.load{border-color:rgba(139,111,255,.3);color:#a899ff}
-
-/* ── PILLS ── */
 .pills{display:flex;flex-wrap:wrap;gap:7px}
 .pill{display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border-radius:999px;background:rgba(255,255,255,.04);border:1px solid var(--b);font-family:var(--mono);font-size:11px;color:var(--m)}
 .pill b{color:var(--t);font-weight:700}
-
-/* ── CANVAS ── */
 .cv-wrap{position:relative;background:var(--bg);min-height:260px;overflow:hidden}
 .cv-wrap canvas{display:block;width:100%}
 .cv-empty{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--m);font-family:var(--mono);font-size:12px;gap:8px}
@@ -122,8 +103,6 @@ select option{background:var(--s2)}
 .cv-leg{display:flex;gap:12px;flex-wrap:wrap;align-items:center;padding:10px 18px;border-top:1px solid var(--b);font-family:var(--mono);font-size:11px;color:var(--m)}
 .leg-item{display:flex;align-items:center;gap:6px}
 .leg-dot{width:9px;height:9px;border-radius:50%}
-
-/* ── NOTE TABLE ── */
 .nt-wrap{max-height:200px;overflow-y:auto;border-top:1px solid var(--b);scrollbar-width:thin;scrollbar-color:var(--d) transparent}
 .nt{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:11px}
 .nt th{position:sticky;top:0;background:var(--s2);color:var(--m);font-weight:500;padding:7px 12px;text-align:left;letter-spacing:.06em;border-bottom:1px solid var(--b);font-size:10px;text-transform:uppercase}
@@ -131,17 +110,11 @@ select option{background:var(--s2)}
 .nt tr:last-child td{border:none}
 .nt tr:hover td{background:rgba(255,255,255,.02)}
 .ndot{width:9px;height:9px;border-radius:50%;display:inline-block}
-
-/* ── EXPORT ── */
 .code{background:var(--bg);border:1px solid var(--b);border-radius:13px;padding:13px 15px;max-height:220px;overflow:auto;font-family:var(--mono);font-size:11px;color:#7aceff;line-height:1.7;white-space:pre;scrollbar-width:thin;scrollbar-color:var(--d) transparent}
-
-/* ── SCROLLBAR ── */
 ::-webkit-scrollbar{width:5px;height:5px}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:var(--d);border-radius:3px}
 ::-webkit-scrollbar-thumb:hover{background:var(--m)}
-
-/* ── RESPONSIVE ── */
 @media(max-width:900px){.grid{grid-template-columns:1fr}.hdr{flex-direction:column}.stats-col{flex-direction:row;flex-wrap:wrap;min-width:0}}
 @media(max-width:540px){.r2,.r3{grid-template-columns:1fr}.btn-row{flex-direction:column}}
 </style>
@@ -151,8 +124,6 @@ select option{background:var(--s2)}
 <div class="orb orb2"></div>
 
 <div class="page">
-
-<!-- HEADER -->
 <header class="hdr">
   <div class="hdr-l">
     <h1>MIDI<span class="ac">→</span>GRAB</h1>
@@ -174,17 +145,11 @@ select option{background:var(--s2)}
   </div>
 </header>
 
-<!-- MAIN GRID -->
 <div class="grid">
-
-  <!-- LEFT COLUMN -->
   <div style="display:flex;flex-direction:column;gap:16px">
-
-    <!-- Upload + Settings -->
     <div class="panel">
       <div class="ph"><div class="ph-dots"><span class="da"></span><span class="db"></span><span class="dc"></span></div><span class="ph-title">settings.json</span></div>
       <div class="pb">
-
         <div class="field">
           <label>MIDI File</label>
           <div class="drop" id="dropZone">
@@ -223,11 +188,9 @@ select option{background:var(--s2)}
 
         <div class="status" id="status">Upload a MIDI file to begin.</div>
         <div class="pills" id="pills"></div>
-
       </div>
     </div>
 
-    <!-- Export -->
     <div class="panel">
       <div class="ph"><div class="ph-dots"><span class="da"></span><span class="db"></span><span class="dc"></span></div><span class="ph-title">level_export.json</span></div>
       <div class="pb">
@@ -239,10 +202,8 @@ select option{background:var(--s2)}
         <div class="status" id="expStatus">No level built yet.</div>
       </div>
     </div>
-
   </div>
 
-  <!-- RIGHT COLUMN: Preview -->
   <div class="panel" style="display:flex;flex-direction:column;">
     <div class="ph">
       <div class="ph-dots"><span class="da"></span><span class="db"></span><span class="dc"></span></div>
@@ -271,7 +232,6 @@ select option{background:var(--s2)}
       </table>
     </div>
   </div>
-
 </div>
 </div>
 
@@ -279,26 +239,18 @@ select option{background:var(--s2)}
 <script>
 'use strict';
 
-/* ─────────────────────────────────────────
-   STATE
-───────────────────────────────────────── */
 let midi = null;
-let events = [];          // all note events sorted by time
-let pitches = [];         // unique midi numbers, sorted low→high
-let pitchInfo = new Map();// midi# → { soundId, triggerId, freq, name, color, events[] }
+let events = [];
+let pitches = [];
+let pitchInfo = new Map();
 let levelJson = null;
 let songDuration = 0;
-
-// playback
 let audioCtx = null;
 let playing = false;
 let rafId = 0;
 let playStartAC = 0;
 let schedNodes = [];
 
-/* ─────────────────────────────────────────
-   HELPERS
-───────────────────────────────────────── */
 const NOTE_NAMES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
 const noteName = m => NOTE_NAMES[((m%12)+12)%12] + (Math.floor(m/12)-1);
 const midiFreq = m => 440 * Math.pow(2, (m-69)/12);
@@ -316,9 +268,6 @@ function setExpStatus(msg, cls='') {
   el.textContent = msg;
 }
 
-/* ─────────────────────────────────────────
-   MIDI LOADING
-───────────────────────────────────────── */
 function loadBuffer(buf, name) {
   try { midi = new Midi(buf); }
   catch(e) { setStatus('Parse error: '+e.message, 'err'); return; }
@@ -340,7 +289,7 @@ function loadBuffer(buf, name) {
 }
 
 function processAndRender() {
-  const trackIdx = parseInt(document.getElementById('trackSel').value);
+  const trackIdx = parseInt(document.getElementById('trackSel').value, 10);
   const tracks = trackIdx === -1 ? midi.tracks : [midi.tracks[trackIdx]];
 
   const raw = [];
@@ -353,11 +302,6 @@ function processAndRender() {
   events = raw;
   songDuration = raw.length ? Math.max(...raw.map(e=>e.time+e.dur)) : 0;
 
-  // Build unique pitch map
-  // ID scheme:
-  //   Sound blocks:   1 .. P          (P = unique pitch count)
-  //   Trigger blocks: P+1 .. 2P
-  //   The animated block: 2P+1
   pitchInfo = new Map();
   pitches = [];
   const seen = new Set();
@@ -382,12 +326,10 @@ function processAndRender() {
   });
   for (const ev of events) pitchInfo.get(ev.midi).events.push(ev);
 
-  // Update stats
   document.getElementById('sUniq').textContent = P;
   document.getElementById('sEvts').textContent = events.length;
   document.getElementById('sDur').textContent  = songDuration.toFixed(1);
 
-  // Pills
   const pillsEl = document.getElementById('pills');
   pillsEl.innerHTML = '';
   const pillData = [
@@ -404,15 +346,10 @@ function processAndRender() {
     pillsEl.appendChild(d);
   }
 
-  // Note table
   renderTable();
-  // Piano roll
   renderRoll(-1);
 }
 
-/* ─────────────────────────────────────────
-   NOTE TABLE
-───────────────────────────────────────── */
 function renderTable() {
   const wrap = document.getElementById('ntWrap');
   const body = document.getElementById('ntBody');
@@ -433,9 +370,6 @@ function renderTable() {
   }
 }
 
-/* ─────────────────────────────────────────
-   PIANO ROLL CANVAS
-───────────────────────────────────────── */
 function renderRoll(playhead) {
   const wrap  = document.getElementById('cvWrap');
   const empty = document.getElementById('cvEmpty');
@@ -456,7 +390,6 @@ function renderRoll(playhead) {
   cv.style.height = H + 'px';
   ctx.setTransform(dpr,0,0,dpr,0,0);
 
-  // bg
   ctx.fillStyle = '#07080f';
   ctx.fillRect(0,0,W,H);
 
@@ -468,7 +401,6 @@ function renderRoll(playhead) {
 
   const pitchY = m => H - 8 - (m - minP + 0.5) * laneH;
 
-  // grid (time)
   ctx.strokeStyle = 'rgba(255,255,255,.04)';
   ctx.lineWidth = 1;
   for (let t=0; t<=songDuration; t+=1) {
@@ -481,7 +413,6 @@ function renderRoll(playhead) {
     }
   }
 
-  // pitch lanes + labels
   for (const m of pitches) {
     const info = pitchInfo.get(m);
     const y    = pitchY(m);
@@ -500,7 +431,6 @@ function renderRoll(playhead) {
     ctx.beginPath(); ctx.moveTo(LABEL_W,y); ctx.lineTo(W,y); ctx.stroke();
   }
 
-  // note bars
   for (const ev of events) {
     const info = pitchInfo.get(ev.midi);
     const x = LABEL_W + ev.time * pxPerSec;
@@ -515,7 +445,6 @@ function renderRoll(playhead) {
   }
   ctx.shadowBlur = 0;
 
-  // playhead
   if (playhead >= 0) {
     const px = LABEL_W + playhead * pxPerSec;
     ctx.save();
@@ -528,53 +457,31 @@ function renderRoll(playhead) {
   }
 }
 
-/* ─────────────────────────────────────────
-   BUILD LEVEL JSON
-   ─────────────────────────────────────────
-   Architecture:
-   • 1 Sound block per unique pitch  (IDs 1..P)
-   • 1 Trigger block per unique pitch (IDs P+1..2P)
-     – Trigger placed at a fixed XY grid position, Z=0
-     – Trigger is wired → its Sound block
-   • 1 Animated block (ID 2P+1) with a keyframe for EVERY note event
-     – At time T, the block teleports to the XY of that note's trigger
-     – This causes it to pass through the trigger → fires the sound
-───────────────────────────────────────── */
 function buildLevel() {
   if (!events.length) { setStatus('No notes found.','err'); return; }
 
   const spacing = parseFloat(document.getElementById('spacing').value) || 3;
   const vol     = parseFloat(document.getElementById('vol').value)     || 0.8;
   const atk     = parseFloat(document.getElementById('atk').value)     || 0.01;
-  // UI: 0=Sine,1=Square,2=Noise,3=Sawtooth → GRAB waveType: 0=Sine,1=Square,2=Sawtooth,3=Noise
   const waveUItoGRAB = [0, 1, 3, 2];
-  const wave    = waveUItoGRAB[parseInt(document.getElementById('waveSel').value)] ?? 2;
+  const wave    = waveUItoGRAB[parseInt(document.getElementById('waveSel').value, 10)] ?? 2;
 
   const P     = pitches.length;
   const nodes = [];
-
-  // ── Assign trigger positions (fixed grid) ──
-  // Lay them out in a row along the X axis.
-  // The animated block will snap to (trigX, trigY, 0) for each note.
-  // Z stays 0 for all triggers and sounds (they're stationary).
-  const trigZ = -5; // triggers sit 5m in front; block parks at z=500 behind them
-  const trigPositions = new Map(); // midi → {x, y, z}
+  const trigPositions = new Map();
   pitches.forEach((m, idx) => {
     const x = (idx - (P-1)/2) * spacing;
-    const y = 0;
-    const z = trigZ;
-    trigPositions.set(m, {x, y, z});
+    trigPositions.set(m, {x, y:0, z:0});
   });
 
-  // ── 1. SOUND BLOCKS (1 per unique pitch) ──
-  for (const [idx, m] of pitches.entries()) {
+  for (const m of pitches) {
     const info = pitchInfo.get(m);
     const pos  = trigPositions.get(m);
 
     nodes.push({
       objectID: info.soundId,
       levelNodeSound: {
-        position: { x: pos.x, y: pos.y + 2, z: pos.z }, // slightly above trigger
+        position: { x: pos.x, y: pos.y + 1.6, z: pos.z },
         rotation: { x:0, y:0, z:0, w:1 },
         scale:    { x:1, y:1, z:1 },
         startActive: false,
@@ -598,21 +505,19 @@ function buildLevel() {
           repeatSpeed:      0,
           flangerFrequency: 0,
           flangerDepth:     0,
-          lowPassFilterFrequency:  22000,
+          lowPassFilterFrequency:  100,
           highPassFilterFrequency: 0,
           reverbDelay:      0,
           reverbDecayFactor: 0,
         },
         volume: vol,
-        maxRangeFactor: 9999,
+        maxRangeFactor: 100,
         repeat: false,
         name: `sound_${info.name.replace('#','s')}_${m}`,
       }
     });
   }
 
-  // ── 2. TRIGGER BLOCKS (1 per unique pitch) ──
-  // Each trigger is wired to fire its Sound block.
   for (const m of pitches) {
     const info = pitchInfo.get(m);
     const pos  = trigPositions.get(m);
@@ -622,76 +527,51 @@ function buildLevel() {
       levelNodeTrigger: {
         shape:    1000,
         position: { x: pos.x, y: pos.y, z: pos.z },
-        scale:    { x: 2.0, y: 2.0, z: 2.0 },
+        scale:    { x: 3.0, y: 3.0, z: 3.0 },
         rotation: { x:0, y:0, z:0, w:1 },
         isShared: false,
         triggerTargets: [
-          {
-            triggerTargetSound: {
-              objectID: info.soundId,
-              mode: 2, // restart
-            }
-          }
+          { triggerTargetSound: { objectID: info.soundId, mode: 2 } }
         ],
       }
     });
   }
 
-  // ── 3. THE ONE ANIMATED BLOCK ──
-  // Build keyframes: for each note event in time order,
-  // the block snaps to that note's trigger position.
-  //
-  // To make it actually trigger (collide) each time:
-  // - just before T: block is parked at a neutral "away" position (y=999)
-  // - at time T:     block teleports into the trigger volume (x=trigX, y=0, z=0)
-  // - at time T+epsilon: block moves away again (y=999) so next trigger isn't pre-triggered
-  //
-  // The GRAB animation system interpolates between keyframes, so
-  // using a tiny epsilon gap ensures a clean collision per note.
-
-  const AWAY_Z = 500;    // park far on Z axis away from triggers (which are all at z=0)
-  const SNAP_DT = 0.016; // ~1 frame at 60fps
-
-  // Static position MUST be {0,0,0} so keyframe positions equal world positions,
-  // regardless of whether GRAB treats keyframes as absolute or relative offsets.
-  // If relative from {0,0,0}, the offsets ARE the world positions. ✓
-
-  // Build the keyframe list
+  const AWAY_Z = 500;
+  const SNAP_DT = 0.016;
+  const BLOCK_ID = P * 2 + 1;
   const frames = [];
 
-  // Start: parked far away on Z axis
   frames.push({
     time: 0,
-    position: { x: 0, y: 0, z: AWAY_Z },
+    position: { x: 0, y: -0.45, z: AWAY_Z },
     rotation: { x:0, y:0, z:0, w:1 },
   });
 
   for (const ev of events) {
     const pos = trigPositions.get(ev.midi);
-
-    // Snap IN: block moves into the trigger volume at note time
     frames.push({
-      time: ev.time,
-      position: { x: pos.x, y: pos.y, z: pos.z },
+      time: Math.max(0, ev.time - 0.02),
+      position: { x: pos.x, y: -0.45, z: AWAY_Z },
       rotation: { x:0, y:0, z:0, w:1 },
     });
-
-    // Snap OUT: leave quickly so next trigger isn't pre-activated
+    frames.push({
+      time: ev.time,
+      position: { x: pos.x, y: 0, z: 0 },
+      rotation: { x:0, y:0, z:0, w:1 },
+    });
     frames.push({
       time: ev.time + SNAP_DT,
-      position: { x: 0, y: 0, z: AWAY_Z },
+      position: { x: pos.x, y: -0.45, z: AWAY_Z },
       rotation: { x:0, y:0, z:0, w:1 },
     });
   }
 
-  // End frame
   frames.push({
     time: songDuration + 1,
-    position: { x: 0, y: 0, z: AWAY_Z },
+    position: { x: 0, y: -0.45, z: AWAY_Z },
     rotation: { x:0, y:0, z:0, w:1 },
   });
-
-  const BLOCK_ID = P * 2 + 1;
 
   nodes.push({
     objectID: BLOCK_ID,
@@ -707,7 +587,7 @@ function buildLevel() {
     levelNodeStatic: {
       shape:    1000,
       material: 8,
-      position: { x: 0, y: 0, z: 0 },
+      position: { x: 0, y: -0.45, z: 500 },
       scale:    { x: 1.0, y: 1.0, z: 1.0 },
       rotation: { x:0, y:0, z:0, w:1 },
       isNeon:        true,
@@ -720,7 +600,6 @@ function buildLevel() {
     }
   });
 
-  // ── Assemble level ──
   levelJson = {
     formatVersion: 17,
     title: document.getElementById('songName').textContent.replace('.roll',''),
@@ -735,7 +614,6 @@ function buildLevel() {
       sunAltitude: 30, sunAzimuth: 270, sunSize: 0.5, fogDensity: 0,
     },
     levelNodes: nodes,
-    // Human-readable legend (not parsed by GRAB)
     _nodeGuide: {
       soundBlocks:    `objectID 1 to ${P}  (one per unique pitch)`,
       triggerBlocks:  `objectID ${P+1} to ${P*2}  (one per unique pitch, wired to its sound)`,
@@ -752,15 +630,12 @@ function buildLevel() {
 
   setStatus(
     `✓ ${P} sounds + ${P} triggers + 1 animated block (${frames.length} keyframes). `+
-    `Total: ${nodes.length} nodes. ⚠ In-game: set each trigger to "activated by block" only.`,
+    `Total: ${nodes.length} nodes.`,
     'ok'
   );
   setExpStatus(`${(jsonStr.length/1024).toFixed(1)} KB · ${nodes.length} nodes`, 'ok');
 }
 
-/* ─────────────────────────────────────────
-   WEB AUDIO PREVIEW
-───────────────────────────────────────── */
 function getAC() {
   if (!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)();
   if (audioCtx.state==='suspended') audioCtx.resume();
@@ -788,14 +663,13 @@ function startPlay() {
 
   const ac  = getAC();
   const vol = parseFloat(document.getElementById('vol').value)||0.8;
-  const waveIdx = parseInt(document.getElementById('waveSel').value);
+  const waveIdx = parseInt(document.getElementById('waveSel').value, 10);
   const isNoise = waveIdx === 2;
-  const wtMap   = ['sine','square','sawtooth','sawtooth']; // index 2 unused (noise path)
+  const wtMap   = ['sine','square','sawtooth','sawtooth'];
   const wt      = wtMap[waveIdx] || 'sawtooth';
   const atk     = Math.max(0.005, parseFloat(document.getElementById('atk').value)||0.01);
-  const now     = ac.currentTime + 0.05; // small scheduling lookahead
+  const now     = ac.currentTime + 0.05;
 
-  // Pre-build shared noise buffer (2 s looped)
   let noiseBuf = null;
   if (isNoise) {
     const len  = ac.sampleRate * 2;
@@ -807,9 +681,9 @@ function startPlay() {
   schedNodes = [];
   for (const ev of events) {
     const t0  = now + ev.time;
-    const dur = Math.max(0.08, ev.dur); // minimum audible duration
+    const dur = Math.max(0.08, ev.dur);
     const rel = 0.06;
-    const sus = Math.max(t0 + atk, t0 + dur - rel); // sustain start, never before attack end
+    const sus = Math.max(t0 + atk, t0 + dur - rel);
 
     try {
       const gain = ac.createGain();
@@ -858,9 +732,6 @@ function startPlay() {
   })();
 }
 
-/* ─────────────────────────────────────────
-   FILE HANDLING
-───────────────────────────────────────── */
 function handleFile(file) {
   if (!file) return;
   if (!/\.(mid|midi)$/i.test(file.name)) { setStatus('Need a .mid or .midi file','err'); return; }
