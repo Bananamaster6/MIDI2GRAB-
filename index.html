@@ -649,23 +649,16 @@ function buildLevel() {
   // The GRAB animation system interpolates between keyframes, so
   // using a tiny epsilon gap ensures a clean collision per note.
 
-  const AWAY_Y = 500;    // park far above all triggers
+  const AWAY_Z = 500;    // park far behind on Z axis; triggers are all at z=0
   const SNAP_DT = 0.016; // ~1 frame at 60fps
-
-  // NOTE: GRAB animation keyframe positions are in WORLD SPACE (absolute),
-  // NOT relative to the static initial position.
-  // The static position just sets where the block appears before animation starts.
-  // Keyframes override position absolutely during playback.
-
-  const BLOCK_STATIC_POS = { x: 0, y: AWAY_Y, z: 0 };
 
   // Build the keyframe list
   const frames = [];
 
-  // Start position: away
+  // Start: parked far away on Z axis
   frames.push({
     time: 0,
-    position: { x: 0, y: AWAY_Y, z: 0 },
+    position: { x: 0, y: 0, z: AWAY_Z },
     rotation: { x:0, y:0, z:0, w:1 },
   });
 
@@ -682,7 +675,7 @@ function buildLevel() {
     // Snap OUT: leave quickly so next trigger isn't pre-activated
     frames.push({
       time: ev.time + SNAP_DT,
-      position: { x: 0, y: AWAY_Y, z: 0 },
+      position: { x: 0, y: 0, z: AWAY_Z },
       rotation: { x:0, y:0, z:0, w:1 },
     });
   }
@@ -690,7 +683,7 @@ function buildLevel() {
   // End frame
   frames.push({
     time: songDuration + 1,
-    position: { x: 0, y: AWAY_Y, z: 0 },
+    position: { x: 0, y: 0, z: AWAY_Z },
     rotation: { x:0, y:0, z:0, w:1 },
   });
 
@@ -710,7 +703,7 @@ function buildLevel() {
     levelNodeStatic: {
       shape:    1000,
       material: 8,
-      position: { x: 0, y: AWAY_Y, z: 0 },
+      position: { x: 0, y: 0, z: AWAY_Z },
       scale:    { x: 1.0, y: 1.0, z: 1.0 },
       rotation: { x:0, y:0, z:0, w:1 },
       isNeon:        true,
