@@ -201,7 +201,7 @@ select option{background:var(--s2)}
             <select id="waveSel">
               <option value="0">Sine</option>
               <option value="1">Square</option>
-              <option value="2">Triangle</option>
+              <option value="2">Noise</option>
               <option value="3" selected>Sawtooth</option>
             </select></div>
         </div>
@@ -545,7 +545,9 @@ function buildLevel() {
   const spacing = parseFloat(document.getElementById('spacing').value) || 3;
   const vol     = parseFloat(document.getElementById('vol').value)     || 0.8;
   const atk     = parseFloat(document.getElementById('atk').value)     || 0.01;
-  const wave    = parseInt(document.getElementById('waveSel').value);
+  // UI: 0=Sine,1=Square,2=Noise,3=Sawtooth → GRAB waveType: 0=Sine,1=Square,2=Sawtooth,3=Noise
+  const waveUItoGRAB = [0, 1, 3, 2];
+  const wave    = waveUItoGRAB[parseInt(document.getElementById('waveSel').value)] ?? 2;
 
   const P     = pitches.length;
   const nodes = [];
@@ -619,14 +621,15 @@ function buildLevel() {
       levelNodeTrigger: {
         shape:    1000, // cube hitbox
         position: { x: pos.x, y: pos.y, z: pos.z },
-        scale:    { x: 1.1, y: 1.1, z: 1.1 },
+        scale:    { x: 1.5, y: 1.5, z: 1.5 },
         rotation: { x:0, y:0, z:0, w:1 },
         isShared: false,
+        activatorType: 2, // activated by block (not player)
         triggerTargets: [
           {
             triggerTargetSound: {
               objectID: info.soundId,
-              mode: 0, // play once
+              mode: 2, // restart sound
             }
           }
         ],
@@ -646,8 +649,8 @@ function buildLevel() {
   // The GRAB animation system interpolates between keyframes, so
   // using a tiny epsilon gap ensures a clean collision per note.
 
-  const AWAY_Y = 999;    // far above / off-screen
-  const SNAP_DT = 0.001; // 1ms: instant snap (as close to instantaneous as keyframes allow)
+  const AWAY_Y = 9999;   // far away, well outside any trigger
+  const SNAP_DT = 0.016; // ~1 frame at 60fps: enough for engine to detect collision
 
   // Build the keyframe list
   const frames = [];
@@ -701,7 +704,7 @@ function buildLevel() {
       shape:    1000,
       material: 8,
       position: { x: 0, y: AWAY_Y, z: 0 },
-      scale:    { x: 0.8, y: 0.8, z: 0.8 },
+      scale:    { x: 1.2, y: 1.2, z: 1.2 },
       rotation: { x:0, y:0, z:0, w:1 },
       isNeon:        true,
       isTransparent: false,
@@ -776,24 +779,47 @@ function startPlay() {
   stopPlay();
   const ac  = getAC();
   const vol = parseFloat(document.getElementById('vol').value)||0.8;
-  const wt  = ['sine','square','triangle','sawtooth'][parseInt(document.getElementById('waveSel').value)]||'sawtooth';
+  const waveIdx = parseInt(document.getElementById('waveSel').value);
+  const wt  = ['sine','square',null,'sawtooth'][waveIdx]||'sawtooth';
+  const isNoise = waveIdx === 2;
   const atk = parseFloat(document.getElementById('atk').value)||0.01;
   const now = ac.currentTime;
 
+  // Pre-build noise buffer if needed
+  let noiseBuf = null;
+  if (isNoise) {
+    const bufLen = ac.sampleRate * 2;
+    noiseBuf = ac.createBuffer(1, bufLen, ac.sampleRate);
+    const data = noiseBuf.getChannelData(0);
+    for (let i = 0; i < bufLen; i++) data[i] = Math.random()*2-1;
+  }
+
   schedNodes = [];
   for (const ev of events) {
-    const osc  = ac.createOscillator();
     const gain = ac.createGain();
-    osc.type = wt;
-    osc.frequency.value = midiFreq(ev.midi);
     gain.gain.setValueAtTime(0, now+ev.time);
     gain.gain.linearRampToValueAtTime(vol*ev.vel, now+ev.time+atk);
     gain.gain.setValueAtTime(vol*ev.vel, now+ev.time+ev.dur-0.05);
     gain.gain.linearRampToValueAtTime(0, now+ev.time+ev.dur);
-    osc.connect(gain).connect(ac.destination);
-    osc.start(now+ev.time);
-    osc.stop(now+ev.time+ev.dur+0.06);
-    schedNodes.push({o:osc,g:gain});
+    let src;
+    if (isNoise) {
+      src = ac.createBufferSource();
+      src.buffer = noiseBuf;
+      src.loop = true;
+      const bpf = ac.createBiquadFilter();
+      bpf.type = 'bandpass';
+      bpf.frequency.value = midiFreq(ev.midi);
+      bpf.Q.value = 8;
+      src.connect(bpf).connect(gain).connect(ac.destination);
+    } else {
+      src = ac.createOscillator();
+      src.type = wt;
+      src.frequency.value = midiFreq(ev.midi);
+      src.connect(gain).connect(ac.destination);
+    }
+    src.start(now+ev.time);
+    src.stop(now+ev.time+ev.dur+0.06);
+    schedNodes.push({o:src,g:gain});
   }
 
   playing = true;
