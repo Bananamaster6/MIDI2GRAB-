@@ -335,6 +335,7 @@ function loadBuffer(buf, name) {
   document.getElementById('songName').textContent = name.replace(/\.(mid|midi)$/i,'') + '.roll';
   processAndRender();
   document.getElementById('buildBtn').disabled = false;
+  document.getElementById('playBtn').disabled = false;
   setStatus(`Loaded "${name}" · ${events.length} events · ${pitches.length} unique pitches`, 'ok');
 }
 
@@ -619,17 +620,16 @@ function buildLevel() {
     nodes.push({
       objectID: info.triggerId,
       levelNodeTrigger: {
-        shape:    1000, // cube hitbox
+        shape:    1000,
         position: { x: pos.x, y: pos.y, z: pos.z },
-        scale:    { x: 1.5, y: 1.5, z: 1.5 },
+        scale:    { x: 2.0, y: 2.0, z: 2.0 },
         rotation: { x:0, y:0, z:0, w:1 },
         isShared: false,
-        activatorType: 2, // activated by block (not player)
         triggerTargets: [
           {
             triggerTargetSound: {
               objectID: info.soundId,
-              mode: 2, // restart sound
+              mode: 2, // restart
             }
           }
         ],
@@ -649,8 +649,15 @@ function buildLevel() {
   // The GRAB animation system interpolates between keyframes, so
   // using a tiny epsilon gap ensures a clean collision per note.
 
-  const AWAY_Y = 9999;   // far away, well outside any trigger
-  const SNAP_DT = 0.016; // ~1 frame at 60fps: enough for engine to detect collision
+  const AWAY_Y = 500;    // park far above all triggers
+  const SNAP_DT = 0.016; // ~1 frame at 60fps
+
+  // NOTE: GRAB animation keyframe positions are in WORLD SPACE (absolute),
+  // NOT relative to the static initial position.
+  // The static position just sets where the block appears before animation starts.
+  // Keyframes override position absolutely during playback.
+
+  const BLOCK_STATIC_POS = { x: 0, y: AWAY_Y, z: 0 };
 
   // Build the keyframe list
   const frames = [];
@@ -665,14 +672,14 @@ function buildLevel() {
   for (const ev of events) {
     const pos = trigPositions.get(ev.midi);
 
-    // Snap IN at note time (teleport into trigger)
+    // Snap IN: block moves into the trigger volume at note time
     frames.push({
       time: ev.time,
       position: { x: pos.x, y: pos.y, z: pos.z },
       rotation: { x:0, y:0, z:0, w:1 },
     });
 
-    // Snap OUT immediately after (so next note's trigger isn't pre-activated)
+    // Snap OUT: leave quickly so next trigger isn't pre-activated
     frames.push({
       time: ev.time + SNAP_DT,
       position: { x: 0, y: AWAY_Y, z: 0 },
@@ -680,7 +687,7 @@ function buildLevel() {
     });
   }
 
-  // End frame: stay away
+  // End frame
   frames.push({
     time: songDuration + 1,
     position: { x: 0, y: AWAY_Y, z: 0 },
@@ -704,13 +711,13 @@ function buildLevel() {
       shape:    1000,
       material: 8,
       position: { x: 0, y: AWAY_Y, z: 0 },
-      scale:    { x: 1.2, y: 1.2, z: 1.2 },
+      scale:    { x: 1.0, y: 1.0, z: 1.0 },
       rotation: { x:0, y:0, z:0, w:1 },
       isNeon:        true,
       isTransparent: false,
       isGrabbable:   false,
       isGrapplable:  false,
-      isPassable:    true,
+      isPassable:    false,
       isAdditive:    true,
       specularBrightness: 0.2,
     }
@@ -721,7 +728,7 @@ function buildLevel() {
     formatVersion: 17,
     title: document.getElementById('songName').textContent.replace('.roll',''),
     creators: 'MIDI2GRAB',
-    description: `${P} sounds · ${events.length} keyframes · 1 animated block`,
+    description: `${P} sounds · ${events.length} keyframes · 1 animated block · triggers restart mode`,
     tags: ['midi','music','generated'],
     maxCheckpointCount: 10,
     fogDensity: 0,
@@ -748,7 +755,7 @@ function buildLevel() {
 
   setStatus(
     `✓ ${P} sounds + ${P} triggers + 1 animated block (${frames.length} keyframes). `+
-    `Total nodes: ${nodes.length}.`,
+    `Total: ${nodes.length} nodes. ⚠ In-game: set each trigger to "activated by block" only.`,
     'ok'
   );
   setExpStatus(`${(jsonStr.length/1024).toFixed(1)} KB · ${nodes.length} nodes`, 'ok');
@@ -766,10 +773,14 @@ function getAC() {
 function stopPlay() {
   playing = false;
   cancelAnimationFrame(rafId);
-  for (const {o,g} of schedNodes) { try{o.stop()}catch{} try{g.disconnect()}catch{} }
+  for (const {o,g} of schedNodes) {
+    try { o.stop(0); } catch{}
+    try { o.disconnect(); } catch{}
+    try { g.disconnect(); } catch{}
+  }
   schedNodes = [];
   document.getElementById('stopBtn').disabled = true;
-  document.getElementById('playBtn').disabled = !levelJson;
+  document.getElementById('playBtn').disabled = !events.length;
   document.getElementById('playTime').textContent = '';
   renderRoll(-1);
 }
@@ -777,49 +788,62 @@ function stopPlay() {
 function startPlay() {
   if (!events.length) return;
   stopPlay();
+
   const ac  = getAC();
   const vol = parseFloat(document.getElementById('vol').value)||0.8;
   const waveIdx = parseInt(document.getElementById('waveSel').value);
-  const wt  = ['sine','square',null,'sawtooth'][waveIdx]||'sawtooth';
   const isNoise = waveIdx === 2;
-  const atk = parseFloat(document.getElementById('atk').value)||0.01;
-  const now = ac.currentTime;
+  const wtMap   = ['sine','square','sawtooth','sawtooth']; // index 2 unused (noise path)
+  const wt      = wtMap[waveIdx] || 'sawtooth';
+  const atk     = Math.max(0.005, parseFloat(document.getElementById('atk').value)||0.01);
+  const now     = ac.currentTime + 0.05; // small scheduling lookahead
 
-  // Pre-build noise buffer if needed
+  // Pre-build shared noise buffer (2 s looped)
   let noiseBuf = null;
   if (isNoise) {
-    const bufLen = ac.sampleRate * 2;
-    noiseBuf = ac.createBuffer(1, bufLen, ac.sampleRate);
-    const data = noiseBuf.getChannelData(0);
-    for (let i = 0; i < bufLen; i++) data[i] = Math.random()*2-1;
+    const len  = ac.sampleRate * 2;
+    noiseBuf   = ac.createBuffer(1, len, ac.sampleRate);
+    const d    = noiseBuf.getChannelData(0);
+    for (let i = 0; i < len; i++) d[i] = Math.random()*2-1;
   }
 
   schedNodes = [];
   for (const ev of events) {
-    const gain = ac.createGain();
-    gain.gain.setValueAtTime(0, now+ev.time);
-    gain.gain.linearRampToValueAtTime(vol*ev.vel, now+ev.time+atk);
-    gain.gain.setValueAtTime(vol*ev.vel, now+ev.time+ev.dur-0.05);
-    gain.gain.linearRampToValueAtTime(0, now+ev.time+ev.dur);
-    let src;
-    if (isNoise) {
-      src = ac.createBufferSource();
-      src.buffer = noiseBuf;
-      src.loop = true;
-      const bpf = ac.createBiquadFilter();
-      bpf.type = 'bandpass';
-      bpf.frequency.value = midiFreq(ev.midi);
-      bpf.Q.value = 8;
-      src.connect(bpf).connect(gain).connect(ac.destination);
-    } else {
-      src = ac.createOscillator();
-      src.type = wt;
-      src.frequency.value = midiFreq(ev.midi);
-      src.connect(gain).connect(ac.destination);
+    const t0  = now + ev.time;
+    const dur = Math.max(0.08, ev.dur); // minimum audible duration
+    const rel = 0.06;
+    const sus = Math.max(t0 + atk, t0 + dur - rel); // sustain start, never before attack end
+
+    try {
+      const gain = ac.createGain();
+      gain.gain.setValueAtTime(0, t0);
+      gain.gain.linearRampToValueAtTime(vol * (ev.vel||0.8), t0 + atk);
+      gain.gain.setValueAtTime(vol * (ev.vel||0.8), sus);
+      gain.gain.linearRampToValueAtTime(0, t0 + dur);
+
+      let src;
+      if (isNoise) {
+        src = ac.createBufferSource();
+        src.buffer = noiseBuf;
+        src.loop   = true;
+        const bpf  = ac.createBiquadFilter();
+        bpf.type        = 'bandpass';
+        bpf.frequency.value = midiFreq(ev.midi);
+        bpf.Q.value     = 10;
+        src.connect(bpf).connect(gain);
+      } else {
+        src = ac.createOscillator();
+        src.type = wt;
+        src.frequency.value = midiFreq(ev.midi);
+        src.connect(gain);
+      }
+      gain.connect(ac.destination);
+      src.start(t0);
+      src.stop(t0 + dur + 0.02);
+      schedNodes.push({o:src, g:gain});
+    } catch(e) {
+      console.warn('schedNote err', ev, e);
     }
-    src.start(now+ev.time);
-    src.stop(now+ev.time+ev.dur+0.06);
-    schedNodes.push({o:src,g:gain});
   }
 
   playing = true;
@@ -832,7 +856,7 @@ function startPlay() {
     const t = ac.currentTime - playStartAC;
     document.getElementById('playTime').textContent = t.toFixed(2)+'s';
     renderRoll(t);
-    if (t > songDuration+0.8) { stopPlay(); return; }
+    if (t > songDuration + 1.5) { stopPlay(); return; }
     rafId = requestAnimationFrame(tick);
   })();
 }
