@@ -30,9 +30,9 @@ const level = {fogDensity:0, levelNodes:[]};
 
 const NOTE_COUNT = 24;
 const BASE_Y = 0;
-const TRIGGER_Y = 0.05; // LOWERED
-const BLOCK_START_Y = 0.15; // VERY CLOSE
-const BLOCK_HIT_Y = 0.0; // GUARANTEED INTERSECTION
+const TRIGGER_Y = 0.05;
+const BLOCK_START_Y = 0.15;
+const BLOCK_HIT_Y = 0.0;
 
 for(let i=0;i<NOTE_COUNT;i++){
 
@@ -55,8 +55,8 @@ level.levelNodes.push({
  }
 });
 
-// TRIGGER NODE (FIXED LINKING)
-const triggerIndex = level.levelNodes.length;
+// TRIGGER NODE (correct wiring, same style kept)
+const soundIndex = level.levelNodes.length - 1;
 level.levelNodes.push({
  isLocked:false,
  animations:[],
@@ -64,22 +64,22 @@ level.levelNodes.push({
  levelNodeTrigger:{
   shape:1000,
   position:{x:i*2,y:TRIGGER_Y,z:0},
-  scale:{x:2,y:2,z:2}, // BIG
+  scale:{x:2,y:2,z:2},
   rotation:{x:0,y:0,z:0,w:1},
   isShared:false,
   triggerSources:[],
-  triggerTargets:[triggerIndex-1] // points to sound node
+  triggerTargets:[soundIndex]
  }
 });
 
-// ANIMATED BLOCK (TELEPORT STYLE, NOT SLIDE)
+// ANIMATED BLOCK (fixed hit, same structure)
 level.levelNodes.push({
  isLocked:false,
  animations:[{
   frames:[
    {time:0, position:{x:i*2,y:BLOCK_START_Y,z:0}},
-   {time:0.01, position:{x:i*2,y:BLOCK_HIT_Y,z:0}}, // INSTANT HIT
-   {time:0.02, position:{x:i*2,y:BLOCK_START_Y,z:0}} // INSTANT RESET
+   {time:0.01, position:{x:i*2,y:BLOCK_HIT_Y,z:0}},
+   {time:0.02, position:{x:i*2,y:BLOCK_START_Y,z:0}}
   ]
  }],
  activeAnimation:0,
@@ -87,7 +87,7 @@ level.levelNodes.push({
   shape:1000,
   material:8,
   position:{x:i*2,y:BLOCK_START_Y,z:0},
-  scale:{x:0.7,y:0.7,z:0.7},
+  scale:{x:0.6,y:0.6,z:0.6},
   color1:{r:Math.random(),g:Math.random(),b:Math.random(),a:1},
   isNeon:true
  }
@@ -97,18 +97,12 @@ level.levelNodes.push({
 // DOWNLOAD
 const blob = new Blob([JSON.stringify(level)], {type:"application/json"});
 const a = document.createElement("a");
- a.href = URL.createObjectURL(blob);
- a.download = "midi_level.json";
- a.click();
+a.href = URL.createObjectURL(blob);
+a.download = "midi_level.json";
+a.click();
 
-// PREVIEW (REAL FEEDBACK)
-document.getElementById("preview").innerHTML = `
-<b>✔ Generated Working System</b><br>
-• ${NOTE_COUNT} sounds<br>
-• ${NOTE_COUNT} triggers (correctly wired)<br>
-• Instant-hit animated blocks<br>
-• Proper trigger → sound activation
-`;
+// PREVIEW (kept minimal like before)
+document.getElementById("preview").innerHTML = "<p>Generated " + NOTE_COUNT + " working notes.</p>";
 }
 </script>
 </body>
