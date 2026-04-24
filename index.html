@@ -764,13 +764,13 @@ function init() {
               repeatSpeed: 0,
               flangerFrequency: 0,
               flangerDepth: 0,
-              lowPassFilterFrequency: 100,
+              lowPassFilterFrequency: 10000,
               highPassFilterFrequency: 0,
               reverbDelay: 0,
               reverbDecayFactor: 0
             },
             volume: vol,
-            maxRangeFactor: 100,
+            maxRangeFactor: 1000,
             repeat: false,
             name: `sound_${g.instrumentName.replace(/[^a-zA-Z0-9]+/g, '_')}_${noteName(m)}_${m}`
           }
@@ -861,8 +861,8 @@ function init() {
             isTransparent: false,
             isGrabbable: false,
             isGrapplable: false,
-            isPassable: true,
-            isAdditive: true,
+            isPassable: false,
+            isAdditive: false,
             specularBrightness: 0.2
           }
         });
@@ -880,7 +880,7 @@ function init() {
       title: songNameEl.textContent.replace('.roll', ''),
       creators: 'MIDI2GRAB',
       description: `${groups.length} instruments · ${soundCount} sounds · ${blockCount} animated blocks`,
-      tags: ['midi', 'music', 'generated'],
+      tags: ['innovative'],
       maxCheckpointCount: 10,
       fogDensity: 0,
       ambienceSettings: {
