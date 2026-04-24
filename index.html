@@ -654,7 +654,7 @@ function init() {
             repeatSpeed: 0,
             flangerFrequency: 0,
             flangerDepth: 0,
-            lowPassFilterFrequency: 0,
+            lowPassFilterFrequency: 1000,
             highPassFilterFrequency: 0,
             reverbDelay: 0,
             reverbDecayFactor: 0
@@ -771,8 +771,8 @@ function init() {
         isTransparent: false,
         isGrabbable: false,
         isGrapplable: false,
-        isPassable: true,
-        isAdditive: true,
+        isPassable: false,
+        isAdditive: false,
         specularBrightness: 0.2
       }
     });
