@@ -35,10 +35,10 @@ body::before{
 .orb2{width:400px;height:400px;background:rgba(139,111,255,.06);bottom:-150px;right:-100px}
 @keyframes orbmove{from{transform:translate(0,0) scale(1)}to{transform:translate(40px,30px) scale(1.08)}}
 
-/* PAGE */
+/* ── PAGE ── */
 .page{position:relative;z-index:1;max-width:1100px;margin:0 auto;padding:28px 20px 80px;display:flex;flex-direction:column;gap:20px}
 
-/* HEADER */
+/* ── HEADER ── */
 .hdr{
   background:var(--s1);border:1px solid var(--b);border-radius:18px;
   padding:32px 36px;display:flex;align-items:flex-start;justify-content:space-between;
@@ -57,10 +57,10 @@ body::before{
 .stat-v{font-family:var(--mono);font-size:24px;color:var(--a);line-height:1;margin-bottom:3px}
 .stat-l{font-size:10px;color:var(--m);letter-spacing:.08em;text-transform:uppercase}
 
-/* MAIN GRID */
+/* ── MAIN GRID ── */
 .grid{display:grid;grid-template-columns:380px 1fr;gap:18px;align-items:start}
 
-/* PANEL */
+/* ── PANEL ── */
 .panel{background:var(--s1);border:1px solid var(--b);border-radius:18px;overflow:hidden}
 .ph{display:flex;align-items:center;gap:8px;padding:13px 18px;background:var(--s2);border-bottom:1px solid var(--b)}
 .ph-dots{display:flex;gap:5px}
@@ -69,7 +69,7 @@ body::before{
 .ph-title{font-family:var(--mono);font-size:11px;color:var(--m);letter-spacing:.08em}
 .pb{padding:18px;display:flex;flex-direction:column;gap:13px}
 
-/* FIELD */
+/* ── FIELD ── */
 .field{display:flex;flex-direction:column;gap:7px}
 .field>label{font-family:var(--mono);font-size:10px;color:var(--a);letter-spacing:.1em;text-transform:uppercase;display:flex;align-items:center;gap:8px}
 .field>label::after{content:'';flex:1;height:1px;background:var(--b)}
@@ -89,7 +89,7 @@ select option{background:var(--s2)}
 .r2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .r3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
 
-/* BUTTONS */
+/* ── BUTTONS ── */
 .btn{border:none;border-radius:11px;padding:11px 18px;font-family:var(--ui);font-size:13px;font-weight:700;cursor:pointer;transition:all .17s;display:inline-flex;align-items:center;gap:7px;white-space:nowrap}
 .btn-p{background:var(--a);color:#040f0a;box-shadow:0 0 20px rgba(77,255,200,.18)}
 .btn-p:hover{filter:brightness(1.08);transform:translateY(-1px);box-shadow:0 0 30px rgba(77,255,200,.3)}
@@ -102,19 +102,19 @@ select option{background:var(--s2)}
 .btn-d:hover{background:rgba(255,77,106,.1)}
 .btn-row{display:flex;gap:9px;flex-wrap:wrap}
 
-/* STATUS */
+/* ── STATUS ── */
 .status{border-radius:11px;border:1px solid var(--b);background:var(--s2);padding:11px 13px;font-family:var(--mono);font-size:11px;color:var(--m);min-height:42px;line-height:1.6;transition:all .2s}
 .status.ok{border-color:rgba(77,255,200,.3);color:var(--ok)}
 .status.err{border-color:rgba(255,77,106,.3);color:var(--err)}
 .status.warn{border-color:rgba(255,200,77,.3);color:var(--warn)}
 .status.load{border-color:rgba(139,111,255,.3);color:#a899ff}
 
-/* PILLS */
+/* ── PILLS ── */
 .pills{display:flex;flex-wrap:wrap;gap:7px}
 .pill{display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border-radius:999px;background:rgba(255,255,255,.04);border:1px solid var(--b);font-family:var(--mono);font-size:11px;color:var(--m)}
 .pill b{color:var(--t);font-weight:700}
 
-/* CANVAS */
+/* ── CANVAS ── */
 .cv-wrap{position:relative;background:var(--bg);min-height:260px;overflow:hidden}
 .cv-wrap canvas{display:block;width:100%}
 .cv-empty{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--m);font-family:var(--mono);font-size:12px;gap:8px}
@@ -123,7 +123,7 @@ select option{background:var(--s2)}
 .leg-item{display:flex;align-items:center;gap:6px}
 .leg-dot{width:9px;height:9px;border-radius:50%}
 
-/* NOTE TABLE */
+/* ── NOTE TABLE ── */
 .nt-wrap{max-height:200px;overflow-y:auto;border-top:1px solid var(--b);scrollbar-width:thin;scrollbar-color:var(--d) transparent}
 .nt{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:11px}
 .nt th{position:sticky;top:0;background:var(--s2);color:var(--m);font-weight:500;padding:7px 12px;text-align:left;letter-spacing:.06em;border-bottom:1px solid var(--b);font-size:10px;text-transform:uppercase}
@@ -132,16 +132,16 @@ select option{background:var(--s2)}
 .nt tr:hover td{background:rgba(255,255,255,.02)}
 .ndot{width:9px;height:9px;border-radius:50%;display:inline-block}
 
-/* EXPORT */
+/* ── EXPORT ── */
 .code{background:var(--bg);border:1px solid var(--b);border-radius:13px;padding:13px 15px;max-height:220px;overflow:auto;font-family:var(--mono);font-size:11px;color:#7aceff;line-height:1.7;white-space:pre;scrollbar-width:thin;scrollbar-color:var(--d) transparent}
 
-/* SCROLLBAR */
+/* ── SCROLLBAR ── */
 ::-webkit-scrollbar{width:5px;height:5px}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:var(--d);border-radius:3px}
 ::-webkit-scrollbar-thumb:hover{background:var(--m)}
 
-/* RESPONSIVE */
+/* ── RESPONSIVE ── */
 @media(max-width:900px){.grid{grid-template-columns:1fr}.hdr{flex-direction:column}.stats-col{flex-direction:row;flex-wrap:wrap;min-width:0}}
 @media(max-width:540px){.r2,.r3{grid-template-columns:1fr}.btn-row{flex-direction:column}}
 </style>
@@ -152,6 +152,7 @@ select option{background:var(--s2)}
 
 <div class="page">
 
+<!-- HEADER -->
 <header class="hdr">
   <div class="hdr-l">
     <h1>MIDI<span class="ac">→</span>GRAB</h1>
@@ -173,10 +174,13 @@ select option{background:var(--s2)}
   </div>
 </header>
 
+<!-- MAIN GRID -->
 <div class="grid">
 
+  <!-- LEFT COLUMN -->
   <div style="display:flex;flex-direction:column;gap:16px">
 
+    <!-- Upload + Settings -->
     <div class="panel">
       <div class="ph"><div class="ph-dots"><span class="da"></span><span class="db"></span><span class="dc"></span></div><span class="ph-title">settings.json</span></div>
       <div class="pb">
@@ -223,6 +227,7 @@ select option{background:var(--s2)}
       </div>
     </div>
 
+    <!-- Export -->
     <div class="panel">
       <div class="ph"><div class="ph-dots"><span class="da"></span><span class="db"></span><span class="dc"></span></div><span class="ph-title">level_export.json</span></div>
       <div class="pb">
@@ -237,6 +242,7 @@ select option{background:var(--s2)}
 
   </div>
 
+  <!-- RIGHT COLUMN: Preview -->
   <div class="panel" style="display:flex;flex-direction:column;">
     <div class="ph">
       <div class="ph-dots"><span class="da"></span><span class="db"></span><span class="dc"></span></div>
@@ -260,7 +266,7 @@ select option{background:var(--s2)}
 
     <div class="nt-wrap" id="ntWrap" style="display:none">
       <table class="nt">
-        <thead><tr><th></th><th>Note</th><th>Freq Hz</th><th>Events</th><th>Sound ID</th><th>Trigger ID</th></tr></thead>
+        <thead><tr><th></th><th>Instrument</th><th>Note</th><th>Freq Hz</th><th>Events</th><th>Sound ID</th><th>Trigger ID</th><th>Voices</th></tr></thead>
         <tbody id="ntBody"></tbody>
       </table>
     </div>
@@ -268,6 +274,7 @@ select option{background:var(--s2)}
 
 </div>
 </div>
+
 
 <script src="https://unpkg.com/@tonejs/midi@2.0.28/build/Midi.js"></script>
 <script>
@@ -310,8 +317,7 @@ function init() {
   let midi = null;
   let rawEvents = [];
   let events = [];
-  let pitches = [];
-  let pitchInfo = new Map();
+  let groups = [];
   let levelJson = null;
   let songDuration = 0;
 
@@ -354,31 +360,78 @@ function init() {
     return [...map.values()].sort((a, b) => a.time - b.time || a.midi - b.midi || a.dur - b.dur);
   }
 
-  function getDims() {
-    const dpr = window.devicePixelRatio || 1;
-    const W = cvWrap.clientWidth || 600;
-    const H = 300;
-    return { dpr, W, H };
+  function getInstrumentName(track, idx) {
+    const inst = track?.instrument || {};
+    const name = inst.name && inst.name !== 'unknown' ? inst.name : (track?.name || `Track ${idx + 1}`);
+    return name;
   }
 
-  function sizeCanvases() {
-    const { dpr, W, H } = getDims();
-    [roll].forEach(cv => {
-      cv.width = W * dpr;
-      cv.height = H * dpr;
-      cv.style.width = W + 'px';
-      cv.style.height = H + 'px';
+  function getInstrumentKey(track, idx) {
+    const inst = track?.instrument || {};
+    const num = inst.number ?? inst.program ?? idx;
+    const name = getInstrumentName(track, idx);
+    const channel = track?.channel ?? idx;
+    return `${num}|${channel}|${name}`;
+  }
+
+  function assignVoices(noteEvents) {
+    const lanes = [];
+    const sorted = [...noteEvents].sort((a, b) => a.time - b.time || a.midi - b.midi || a.dur - b.dur);
+    for (const ev of sorted) {
+      let laneIndex = lanes.findIndex(l => l.end <= ev.time + 1e-6);
+      if (laneIndex === -1) {
+        laneIndex = lanes.length;
+        lanes.push({ end: -Infinity, events: [] });
+      }
+      ev.voice = laneIndex;
+      lanes[laneIndex].events.push(ev);
+      lanes[laneIndex].end = ev.time + ev.dur;
+    }
+    return lanes.map(l => l.events);
+  }
+
+  function buildGroups(raw) {
+    const map = new Map();
+    raw.forEach(ev => {
+      if (!map.has(ev.instrumentKey)) {
+        map.set(ev.instrumentKey, {
+          key: ev.instrumentKey,
+          instrumentName: ev.instrumentName,
+          trackLabel: ev.trackLabel,
+          raw: []
+        });
+      }
+      map.get(ev.instrumentKey).raw.push(ev);
     });
 
-    const overlay = document.getElementById('playOverlay');
-    if (overlay) {
-      overlay.width = W * dpr;
-      overlay.height = H * dpr;
-      overlay.style.width = W + 'px';
-      overlay.style.height = H + 'px';
+    const out = [];
+    let idx = 0;
+    for (const g of map.values()) {
+      const compacted = compactEvents(g.raw, 0.04);
+      const pitchesSet = new Set();
+      compacted.forEach(ev => pitchesSet.add(ev.midi));
+      const pitches = [...pitchesSet].sort((a, b) => a - b);
+      const pitchIndex = new Map(pitches.map((m, i) => [m, i]));
+      const voices = assignVoices(compacted);
+      const voiceCount = voices.length;
+      out.push({
+        index: idx++,
+        key: g.key,
+        instrumentName: g.instrumentName,
+        trackLabel: g.trackLabel,
+        raw: g.raw,
+        events: compacted,
+        pitches,
+        pitchIndex,
+        voices,
+        voiceCount,
+        voiceBlocks: [],
+        soundIds: new Map(),
+        triggerIds: new Map(),
+        baseY: 0,
+      });
     }
-
-    return { dpr, W, H };
+    return out;
   }
 
   function loadBuffer(buf, name) {
@@ -401,7 +454,7 @@ function init() {
     processAndRender();
     buildBtn.disabled = false;
     playBtn.disabled = false;
-    setStatus(`Loaded "${name}" · ${rawEvents.length} raw events → ${events.length} compacted events · ${pitches.length} unique pitches`, 'ok');
+    setStatus(`Loaded "${name}" · ${rawEvents.length} raw events → ${events.length} compacted events · ${groups.length} instrument group(s)`, 'ok');
   }
 
   function processAndRender() {
@@ -411,57 +464,49 @@ function init() {
     const tracks = trackIdx === -1 ? midi.tracks : [midi.tracks[trackIdx]];
 
     const raw = [];
-    for (const t of tracks) {
+    tracks.forEach((t, i) => {
+      const instrumentName = getInstrumentName(t, i);
+      const instrumentKey = getInstrumentKey(t, i);
+      const trackLabel = t?.name ? t.name : `Track ${i + 1}`;
       for (const n of t.notes) {
         raw.push({
           midi: n.midi,
           time: n.time,
           dur: Math.max(0.04, n.duration),
-          vel: n.velocity ?? 0.8
+          vel: n.velocity ?? 0.8,
+          instrumentKey,
+          instrumentName,
+          trackLabel
         });
       }
-    }
+    });
 
     raw.sort((a, b) => a.time - b.time || a.midi - b.midi || a.dur - b.dur);
     rawEvents = raw;
     events = compactEvents(raw, 0.04);
     songDuration = events.length ? Math.max(...events.map(e => e.time + e.dur)) : 0;
 
-    pitchInfo = new Map();
-    pitches = [];
-    const seen = new Set();
-    for (const ev of events) {
-      if (!seen.has(ev.midi)) {
-        seen.add(ev.midi);
-        pitches.push(ev.midi);
-      }
-    }
-    pitches.sort((a, b) => a - b);
-
-    const P = pitches.length;
-    pitches.forEach((m, idx) => {
-      pitchInfo.set(m, {
-        soundId: idx + 1,
-        triggerId: P + idx + 1,
-        freq: midiFreq(m),
-        name: noteName(m),
-        color: pitchCol(m),
-        events: []
-      });
+    groups = buildGroups(events);
+    groups.forEach((g, gi) => {
+      g.index = gi;
+      g.baseY = gi * 7.5;
     });
-    for (const ev of events) pitchInfo.get(ev.midi).events.push(ev);
 
-    document.getElementById('sUniq').textContent = P;
+    document.getElementById('sUniq').textContent = groups.reduce((sum, g) => sum + g.pitches.length, 0);
     document.getElementById('sEvts').textContent = events.length;
     document.getElementById('sDur').textContent = songDuration.toFixed(1);
 
     pillsEl.innerHTML = '';
+    const soundCount = groups.reduce((sum, g) => sum + g.pitches.length, 0);
+    const triggerCount = soundCount;
+    const blockCount = groups.reduce((sum, g) => sum + g.voiceCount, 0);
+    const nodeCount = soundCount + triggerCount + blockCount;
     const pillData = [
-      ['Sound blocks', P],
-      ['Trigger blocks', P],
-      ['Animated blocks', 1],
-      ['Total nodes', P * 2 + 1],
-      ['Keyframes', events.length]
+      ['Instruments', groups.length],
+      ['Sound blocks', soundCount],
+      ['Trigger blocks', triggerCount],
+      ['Animated blocks', blockCount],
+      ['Total nodes', nodeCount],
     ];
     for (const [l, v] of pillData) {
       const d = document.createElement('div');
@@ -482,48 +527,88 @@ function init() {
   function renderTable() {
     ntWrap.style.display = 'block';
     ntBody.innerHTML = '';
-    for (const m of pitches) {
-      const info = pitchInfo.get(m);
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td><span class="ndot" style="background:${info.color}"></span></td>
-        <td><b>${info.name}</b></td>
-        <td>${info.freq.toFixed(1)}</td>
-        <td>${info.events.length}</td>
-        <td style="color:var(--m)">snd_${info.soundId}</td>
-        <td style="color:var(--m)">trig_${info.triggerId}</td>
-      `;
-      ntBody.appendChild(tr);
-    }
+    groups.forEach(g => {
+      g.pitches.forEach(m => {
+        const info = {
+          freq: midiFreq(m),
+          name: noteName(m),
+          color: pitchCol(m),
+          soundId: g.soundIds.get(m),
+          triggerId: g.triggerIds.get(m)
+        };
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><span class="ndot" style="background:${info.color}"></span></td>
+          <td><b>${g.instrumentName}</b></td>
+          <td>${info.name}</td>
+          <td>${info.freq.toFixed(1)}</td>
+          <td>${g.events.filter(e => e.midi === m).length}</td>
+          <td style="color:var(--m)">snd_${info.soundId}</td>
+          <td style="color:var(--m)">trig_${info.triggerId}</td>
+          <td>${g.voiceCount}</td>
+        `;
+        ntBody.appendChild(tr);
+      });
+    });
+  }
+
+  function layoutRoll() {
+    const LABEL_W = 110;
+    const laneH = 14;
+    const groupGap = 14;
+    const headerH = 24;
+    const topPad = 14;
+    let y = topPad;
+    groups.forEach(g => {
+      const h = Math.max(54, headerH + g.pitches.length * laneH + 12);
+      g.layout = {
+        labelW: LABEL_W,
+        laneH,
+        headerH,
+        baseY: y,
+        height: h,
+        pitchY: new Map(g.pitches.map((m, i) => [m, y + headerH + i * laneH + 6]))
+      };
+      y += h + groupGap;
+    });
+    return { LABEL_W, laneH, groupGap, totalH: Math.max(300, y), topPad };
   }
 
   function drawStaticRoll() {
-    const { dpr, W, H } = sizeCanvases();
+    const { dpr, W } = sizeCanvases();
     const ctx = roll.getContext('2d');
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.clearRect(0, 0, W, H);
+    const overlay = document.getElementById('playOverlay');
 
-    if (!events.length) {
+    if (!groups.length) {
       cvEmpty.style.display = 'flex';
       leg.style.display = 'none';
+      const H = 300;
+      roll.height = H * dpr;
+      roll.style.height = H + 'px';
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.fillStyle = '#07080f';
       ctx.fillRect(0, 0, W, H);
+      if (overlay) {
+        overlay.width = W * dpr;
+        overlay.height = H * dpr;
+        overlay.style.height = H + 'px';
+      }
       return;
     }
 
     cvEmpty.style.display = 'none';
     leg.style.display = 'flex';
 
+    const layout = layoutRoll();
+    const H = layout.totalH;
+    roll.height = H * dpr;
+    roll.style.height = H + 'px';
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.fillStyle = '#07080f';
     ctx.fillRect(0, 0, W, H);
 
-    const LABEL_W = 48;
+    const LABEL_W = layout.LABEL_W;
     const pxPerSec = (W - LABEL_W) / Math.max(songDuration, 1);
-    const minP = pitches[0];
-    const maxP = pitches[pitches.length - 1];
-    const pitchSpan = Math.max(maxP - minP, 1);
-    const laneH = Math.min(22, (H - 18) / (pitchSpan + 1));
-    const pitchY = m => H - 8 - (m - minP + 0.5) * laneH;
 
     ctx.strokeStyle = 'rgba(255,255,255,.04)';
     ctx.lineWidth = 1;
@@ -540,43 +625,55 @@ function init() {
       }
     }
 
-    for (const m of pitches) {
-      const info = pitchInfo.get(m);
-      const y = pitchY(m);
-      const isBlack = [1, 3, 6, 8, 10].includes(m % 12);
+    groups.forEach((g, gi) => {
+      const ly = g.layout;
+      const bandY = ly.baseY;
+      ctx.fillStyle = gi % 2 === 0 ? '#0b0f16' : '#0d111a';
+      ctx.fillRect(0, bandY, W, ly.height);
+      ctx.fillStyle = 'rgba(255,255,255,.04)';
+      ctx.fillRect(0, bandY, W, 1);
 
-      ctx.fillStyle = isBlack ? '#0f1220' : '#141828';
-      ctx.fillRect(0, y - laneH / 2 - 1, LABEL_W - 2, laneH + 2);
-
-      ctx.fillStyle = info.color;
-      ctx.font = `${Math.max(8, laneH - 3)}px Space Mono, monospace`;
-      ctx.textAlign = 'right';
-      ctx.fillText(info.name, LABEL_W - 5, y + laneH * 0.38);
+      ctx.fillStyle = 'rgba(255,255,255,.06)';
+      ctx.fillRect(0, bandY + 2, LABEL_W, ly.height - 4);
+      ctx.fillStyle = '#eaf2ff';
+      ctx.font = '12px Syne, sans-serif';
       ctx.textAlign = 'left';
+      ctx.fillText(g.instrumentName, 8, bandY + 17);
+      ctx.fillStyle = 'rgba(255,255,255,.5)';
+      ctx.font = '9px Space Mono, monospace';
+      ctx.fillText(`${g.voiceCount} voice${g.voiceCount === 1 ? '' : 's'}`, 8, bandY + 31);
 
-      ctx.strokeStyle = 'rgba(255,255,255,.04)';
-      ctx.beginPath();
-      ctx.moveTo(LABEL_W, y);
-      ctx.lineTo(W, y);
-      ctx.stroke();
-    }
+      g.pitches.forEach(m => {
+        const infoColor = pitchCol(m);
+        const y = ly.pitchY.get(m);
+        ctx.strokeStyle = 'rgba(255,255,255,.04)';
+        ctx.beginPath();
+        ctx.moveTo(LABEL_W, y);
+        ctx.lineTo(W, y);
+        ctx.stroke();
+        ctx.fillStyle = infoColor;
+        ctx.font = '10px Space Mono, monospace';
+        ctx.textAlign = 'right';
+        ctx.fillText(noteName(m), LABEL_W - 6, y + 4);
+        ctx.textAlign = 'left';
+      });
 
-    for (const ev of events) {
-      const info = pitchInfo.get(ev.midi);
-      const x = LABEL_W + ev.time * pxPerSec;
-      const w = Math.max(2, ev.dur * pxPerSec - 1);
-      const y = pitchY(ev.midi);
-
-      ctx.fillStyle = info.color + '88';
-      ctx.fillRect(x, y - laneH / 2 + 1, w, laneH - 2);
-    }
+      g.events.forEach(ev => {
+        const m = ev.midi;
+        const y = ly.pitchY.get(m) - 5;
+        const x = LABEL_W + ev.time * pxPerSec;
+        const w = Math.max(2, ev.dur * pxPerSec - 1);
+        ctx.fillStyle = pitchCol(m) + '88';
+        ctx.fillRect(x, y, w, 10);
+      });
+    });
   }
 
   function renderRoll(playhead) {
     const overlay = document.getElementById('playOverlay');
-    if (!overlay) return;
-
-    const { dpr, W, H } = getDims();
+    if (!overlay || !groups.length) return;
+    const { dpr, W } = getDims();
+    const H = parseInt(roll.style.height || '300', 10) || roll.height || 300;
     const ctx = overlay.getContext('2d');
     overlay.width = W * dpr;
     overlay.height = H * dpr;
@@ -584,13 +681,11 @@ function init() {
     overlay.style.height = H + 'px';
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, W, H);
+    if (playhead < 0) return;
 
-    if (!events.length || playhead < 0) return;
-
-    const LABEL_W = 48;
+    const LABEL_W = 110;
     const pxPerSec = (W - LABEL_W) / Math.max(songDuration, 1);
     const px = LABEL_W + playhead * pxPerSec;
-
     ctx.save();
     ctx.strokeStyle = '#ff9f4d';
     ctx.lineWidth = 2;
@@ -604,7 +699,7 @@ function init() {
   }
 
   function buildLevel() {
-    if (!events.length) {
+    if (!groups.length) {
       setStatus('No notes found.', 'err');
       return;
     }
@@ -614,175 +709,178 @@ function init() {
     const atk = parseFloat(atkEl.value) || 0.01;
     const wave = parseInt(waveSel.value, 10);
 
-    const P = pitches.length;
+    let nextId = 1;
     const nodes = [];
 
-    const trigPositions = new Map();
-    pitches.forEach((m, idx) => {
-      const x = (idx - (P - 1) / 2) * spacing;
-      trigPositions.set(m, { x, y: 0, z: 0 });
+    // assign ids first
+    groups.forEach(g => {
+      g.soundIds = new Map();
+      g.triggerIds = new Map();
+      g.pitches.forEach(m => {
+        g.soundIds.set(m, nextId++);
+      });
+      g.pitches.forEach(m => {
+        g.triggerIds.set(m, nextId++);
+      });
+      g.voiceBlocks = g.voices.map(() => nextId++);
     });
 
-    for (const m of pitches) {
-      const info = pitchInfo.get(m);
-      const pos = trigPositions.get(m);
+    const makePitchPos = (g, pitchIdx) => {
+      const x = (pitchIdx - (g.pitches.length - 1) / 2) * spacing;
+      const y = g.baseY;
+      const z = 0;
+      return { x, y, z };
+    };
 
-      nodes.push({
-        objectID: info.soundId,
-        levelNodeSound: {
-          position: { x: pos.x, y: pos.y + 2, z: pos.z },
-          rotation: { x: 0, y: 0, z: 0, w: 1 },
-          scale: { x: 1, y: 1, z: 1 },
-          startActive: false,
-          parameters: {
+    // sounds
+    groups.forEach(g => {
+      g.pitches.forEach((m, idx) => {
+        const pos = makePitchPos(g, idx);
+        const soundId = g.soundIds.get(m);
+        nodes.push({
+          objectID: soundId,
+          levelNodeSound: {
+            position: { x: pos.x, y: pos.y + 2, z: pos.z },
+            rotation: { x: 0, y: 0, z: 0, w: 1 },
+            scale: { x: 1, y: 1, z: 1 },
+            startActive: false,
+            parameters: {
+              volume: vol,
+              waveType: wave,
+              envelopeAttack: atk,
+              envelopeSustain: 0.85,
+              envelopeRelease: 0.12,
+              envelopePunch: 0,
+              frequencyBase: Math.round(midiFreq(m)),
+              frequencyLimit: 30,
+              frequencyRamp: 0,
+              frequencyDeltaRamp: 0,
+              vibratoStrength: 0,
+              vibratoSpeed: 0,
+              pitchJumpMod: 0,
+              pitchJumpSpeed: 0,
+              dutyCycle: 0.5,
+              dutyCycleRamp: 0,
+              repeatSpeed: 0,
+              flangerFrequency: 0,
+              flangerDepth: 0,
+              lowPassFilterFrequency: 100,
+              highPassFilterFrequency: 0,
+              reverbDelay: 0,
+              reverbDecayFactor: 0
+            },
             volume: vol,
-            waveType: wave,
-            envelopeAttack: atk,
-            envelopeSustain: 0.10,
-            envelopeRelease: 0.12,
-            envelopePunch: 0,
-            frequencyBase: Math.round(info.freq),
-            frequencyLimit: 30,
-            frequencyRamp: 0,
-            frequencyDeltaRamp: 0,
-            vibratoStrength: 0,
-            vibratoSpeed: 0,
-            pitchJumpMod: 0,
-            pitchJumpSpeed: 0,
-            dutyCycle: 0.5,
-            dutyCycleRamp: 0,
-            repeatSpeed: 0,
-            flangerFrequency: 0,
-            flangerDepth: 0,
-            lowPassFilterFrequency: 10000,
-            highPassFilterFrequency: 0,
-            reverbDelay: 0,
-            reverbDecayFactor: 0
-          },
-          volume: vol,
-          maxRangeFactor: 100,
-          repeat: false,
-          name: `sound_${info.name.replace('#', 's')}_${m}`
-        }
+            maxRangeFactor: 100,
+            repeat: false,
+            name: `sound_${g.instrumentName.replace(/[^a-zA-Z0-9]+/g, '_')}_${noteName(m)}_${m}`
+          }
+        });
       });
-    }
+    });
 
-    const BLOCK_ID = P * 2 + 1;
-
-    for (const m of pitches) {
-      const info = pitchInfo.get(m);
-      const pos = trigPositions.get(m);
-
-      nodes.push({
-        objectID: info.triggerId,
-        levelNodeTrigger: {
-          shape: 1000,
-          position: { x: pos.x, y: pos.y, z: pos.z },
-          scale: { x: 1.1, y: 1.1, z: 1.1 },
-          rotation: { x: 0, y: 0, z: 0, w: 1 },
-          isShared: true,
-          triggerSources: [
-            { triggerSourceBasic: { type: 4, objectID: BLOCK_ID } }
-          ],
-          triggerTargets: [
-            {
-              triggerTargetSound: {
-                objectID: info.soundId,
-                mode: 3
+    // triggers
+    groups.forEach(g => {
+      g.pitches.forEach((m, idx) => {
+        const pos = makePitchPos(g, idx);
+        const triggerId = g.triggerIds.get(m);
+        nodes.push({
+          objectID: triggerId,
+          levelNodeTrigger: {
+            shape: 1000,
+            position: { x: pos.x, y: pos.y, z: pos.z },
+            scale: { x: 1.1, y: 1.1, z: 1.1 },
+            rotation: { x: 0, y: 0, z: 0, w: 1 },
+            isShared: false,
+            triggerSources: g.voiceBlocks.map(id => ({ triggerSourceBasic: { type: 4, objectID: id } })),
+            triggerTargets: [
+              {
+                triggerTargetSound: {
+                  objectID: g.soundIds.get(m),
+                  mode: 1
+                }
               }
-            }
-          ]
-        }
+            ]
+          }
+        });
       });
-    }
+    });
 
+    // animated blocks (one per voice)
     const AWAY_Z = 2.5;
     const HIT_Z = 0;
     const HOLD = 0.10;
-    const frames = [];
 
-    frames.push({
-      time: 0,
-      position: { x: 0, y: 0, z: AWAY_Z },
-      rotation: { x: 0, y: 0, z: 0, w: 1 }
+    groups.forEach(g => {
+      g.voices.forEach((voiceEvents, voiceIdx) => {
+        const blockId = g.voiceBlocks[voiceIdx];
+        const frames = [];
+        frames.push({
+          time: 0,
+          position: { x: 0, y: g.baseY, z: AWAY_Z },
+          rotation: { x: 0, y: 0, z: 0, w: 1 }
+        });
+
+        voiceEvents.forEach(ev => {
+          const pIdx = g.pitchIndex.get(ev.midi);
+          const pos = makePitchPos(g, pIdx);
+          const t0 = Math.max(0, ev.time - HOLD);
+          const t1 = ev.time;
+          const t2 = ev.time + HOLD;
+
+          frames.push({ time: t0, position: { x: pos.x, y: pos.y, z: AWAY_Z }, rotation: { x: 0, y: 0, z: 0, w: 1 } });
+          frames.push({ time: t1, position: { x: pos.x, y: pos.y, z: AWAY_Z }, rotation: { x: 0, y: 0, z: 0, w: 1 } });
+          frames.push({ time: t1, position: { x: pos.x, y: pos.y, z: HIT_Z }, rotation: { x: 0, y: 0, z: 0, w: 1 } });
+          frames.push({ time: t2, position: { x: pos.x, y: pos.y, z: HIT_Z }, rotation: { x: 0, y: 0, z: 0, w: 1 } });
+          frames.push({ time: t2, position: { x: pos.x, y: pos.y, z: AWAY_Z }, rotation: { x: 0, y: 0, z: 0, w: 1 } });
+        });
+
+        frames.push({
+          time: songDuration + 1,
+          position: { x: 0, y: g.baseY, z: AWAY_Z },
+          rotation: { x: 0, y: 0, z: 0, w: 1 }
+        });
+
+        nodes.push({
+          objectID: blockId,
+          animations: [
+            {
+              name: 'midi_sequence',
+              speed: 1,
+              currentFrameIndex: 0,
+              frames: frames
+            }
+          ],
+          activeAnimation: 0,
+          levelNodeStatic: {
+            shape: 1000,
+            material: 8,
+            position: { x: 0, y: g.baseY, z: AWAY_Z },
+            scale: { x: 0.8, y: 0.8, z: 0.8 },
+            rotation: { x: 0, y: 0, z: 0, w: 1 },
+            isNeon: true,
+            isTransparent: false,
+            isGrabbable: false,
+            isGrapplable: false,
+            isPassable: true,
+            isAdditive: true,
+            specularBrightness: 0.2
+          }
+        });
+      });
     });
 
-    for (const ev of events) {
-      const pos = trigPositions.get(ev.midi);
-      const t0 = Math.max(0, ev.time - HOLD);
-      const t1 = ev.time;
-      const t2 = ev.time + HOLD;
-
-      frames.push({
-        time: t0,
-        position: { x: pos.x, y: pos.y, z: AWAY_Z },
-        rotation: { x: 0, y: 0, z: 0, w: 1 }
-      });
-
-      frames.push({
-        time: t1,
-        position: { x: pos.x, y: pos.y, z: AWAY_Z },
-        rotation: { x: 0, y: 0, z: 0, w: 1 }
-      });
-
-      frames.push({
-        time: t1,
-        position: { x: pos.x, y: pos.y, z: HIT_Z },
-        rotation: { x: 0, y: 0, z: 0, w: 1 }
-      });
-
-      frames.push({
-        time: t2,
-        position: { x: pos.x, y: pos.y, z: HIT_Z },
-        rotation: { x: 0, y: 0, z: 0, w: 1 }
-      });
-
-      frames.push({
-        time: t2,
-        position: { x: pos.x, y: pos.y, z: AWAY_Z },
-        rotation: { x: 0, y: 0, z: 0, w: 1 }
-      });
-    }
-
-    frames.push({
-      time: songDuration + 1,
-      position: { x: 0, y: 0, z: AWAY_Z },
-      rotation: { x: 0, y: 0, z: 0, w: 1 }
-    });
-
-    nodes.push({
-      objectID: BLOCK_ID,
-      animations: [
-        {
-          name: 'midi_sequence',
-          speed: 1,
-          currentFrameIndex: 0,
-          frames: frames
-        }
-      ],
-      activeAnimation: 0,
-      levelNodeStatic: {
-        shape: 1000,
-        material: 8,
-        position: { x: 0, y: 0, z: AWAY_Z },
-        scale: { x: 0.8, y: 0.8, z: 0.8 },
-        rotation: { x: 0, y: 0, z: 0, w: 1 },
-        isNeon: true,
-        isTransparent: false,
-        isGrabbable: false,
-        isGrapplable: false,
-        isPassable: false,
-        isAdditive: false,
-        specularBrightness: 0.2
-      }
-    });
+    const soundCount = groups.reduce((sum, g) => sum + g.pitches.length, 0);
+    const triggerCount = soundCount;
+    const blockCount = groups.reduce((sum, g) => sum + g.voiceCount, 0);
+    const totalNodes = soundCount + triggerCount + blockCount;
+    const totalKeyframes = groups.reduce((sum, g) => sum + g.voices.reduce((s, v) => s + (2 + v.length * 5 + 1), 0), 0);
 
     levelJson = {
       formatVersion: 17,
       title: songNameEl.textContent.replace('.roll', ''),
       creators: 'MIDI2GRAB',
-      description: `${P} sounds · ${events.length} keyframes · 1 animated block`,
-      tags: ['innovative'],
+      description: `${groups.length} instruments · ${soundCount} sounds · ${blockCount} animated blocks`,
+      tags: ['midi', 'music', 'generated'],
       maxCheckpointCount: 10,
       fogDensity: 0,
       ambienceSettings: {
@@ -795,17 +893,18 @@ function init() {
       },
       levelNodes: nodes,
       _nodeGuide: {
-        soundBlocks: `objectID 1 to ${P}  (one per unique pitch)`,
-        triggerBlocks: `objectID ${P + 1} to ${P * 2}  (one per unique pitch, wired to its sound)`,
-        animatedBlock: `objectID ${BLOCK_ID}  (single block, ${frames.length} keyframes encoding the full MIDI timeline)`
+        instruments: groups.map(g => `${g.instrumentName}: ${g.pitches.length} pitches, ${g.voiceCount} voice block(s)`).join(' | '),
+        soundBlocks: `objectID 1 to ${groups.reduce((sum, g) => sum + g.pitches.length, 0)}  (one per unique pitch per instrument)`,
+        triggerBlocks: `same count as sounds, each wired to its sound and all its voice blocks`,
+        animatedBlocks: `one or more per instrument based on polyphony`
       }
     };
 
     const jsonStr = JSON.stringify(levelJson, null, 2);
     codeBox.textContent = jsonStr.slice(0, 8000) + (jsonStr.length > 8000 ? '\n\n// ... truncated for preview' : '');
 
-    setStatus(`✓ ${P} sounds + ${P} triggers + 1 animated block (${frames.length} keyframes). Total nodes: ${nodes.length}.`, 'ok');
-    setExpStatus(`${(jsonStr.length / 1024).toFixed(1)} KB · ${nodes.length} nodes`, 'ok');
+    setStatus(`✓ ${groups.length} instrument group(s), ${soundCount} sounds, ${blockCount} animated block(s). Total nodes: ${totalNodes}.`, 'ok');
+    setExpStatus(`${(jsonStr.length / 1024).toFixed(1)} KB · ${totalNodes} nodes · ${totalKeyframes} keyframes`, 'ok');
     playBtn.disabled = false;
     stopBtn.disabled = true;
     dlBtn.disabled = false;
@@ -945,5 +1044,6 @@ function init() {
   renderRoll(-1);
 }
 </script>
+
 </body>
 </html>
