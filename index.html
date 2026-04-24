@@ -35,10 +35,10 @@ body::before{
 .orb2{width:400px;height:400px;background:rgba(139,111,255,.06);bottom:-150px;right:-100px}
 @keyframes orbmove{from{transform:translate(0,0) scale(1)}to{transform:translate(40px,30px) scale(1.08)}}
 
-/* ── PAGE ── */
+/* PAGE */
 .page{position:relative;z-index:1;max-width:1100px;margin:0 auto;padding:28px 20px 80px;display:flex;flex-direction:column;gap:20px}
 
-/* ── HEADER ── */
+/* HEADER */
 .hdr{
   background:var(--s1);border:1px solid var(--b);border-radius:18px;
   padding:32px 36px;display:flex;align-items:flex-start;justify-content:space-between;
@@ -57,10 +57,10 @@ body::before{
 .stat-v{font-family:var(--mono);font-size:24px;color:var(--a);line-height:1;margin-bottom:3px}
 .stat-l{font-size:10px;color:var(--m);letter-spacing:.08em;text-transform:uppercase}
 
-/* ── MAIN GRID ── */
+/* MAIN GRID */
 .grid{display:grid;grid-template-columns:380px 1fr;gap:18px;align-items:start}
 
-/* ── PANEL ── */
+/* PANEL */
 .panel{background:var(--s1);border:1px solid var(--b);border-radius:18px;overflow:hidden}
 .ph{display:flex;align-items:center;gap:8px;padding:13px 18px;background:var(--s2);border-bottom:1px solid var(--b)}
 .ph-dots{display:flex;gap:5px}
@@ -69,7 +69,7 @@ body::before{
 .ph-title{font-family:var(--mono);font-size:11px;color:var(--m);letter-spacing:.08em}
 .pb{padding:18px;display:flex;flex-direction:column;gap:13px}
 
-/* ── FIELD ── */
+/* FIELD */
 .field{display:flex;flex-direction:column;gap:7px}
 .field>label{font-family:var(--mono);font-size:10px;color:var(--a);letter-spacing:.1em;text-transform:uppercase;display:flex;align-items:center;gap:8px}
 .field>label::after{content:'';flex:1;height:1px;background:var(--b)}
@@ -89,7 +89,7 @@ select option{background:var(--s2)}
 .r2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .r3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
 
-/* ── BUTTONS ── */
+/* BUTTONS */
 .btn{border:none;border-radius:11px;padding:11px 18px;font-family:var(--ui);font-size:13px;font-weight:700;cursor:pointer;transition:all .17s;display:inline-flex;align-items:center;gap:7px;white-space:nowrap}
 .btn-p{background:var(--a);color:#040f0a;box-shadow:0 0 20px rgba(77,255,200,.18)}
 .btn-p:hover{filter:brightness(1.08);transform:translateY(-1px);box-shadow:0 0 30px rgba(77,255,200,.3)}
@@ -102,19 +102,19 @@ select option{background:var(--s2)}
 .btn-d:hover{background:rgba(255,77,106,.1)}
 .btn-row{display:flex;gap:9px;flex-wrap:wrap}
 
-/* ── STATUS ── */
+/* STATUS */
 .status{border-radius:11px;border:1px solid var(--b);background:var(--s2);padding:11px 13px;font-family:var(--mono);font-size:11px;color:var(--m);min-height:42px;line-height:1.6;transition:all .2s}
 .status.ok{border-color:rgba(77,255,200,.3);color:var(--ok)}
 .status.err{border-color:rgba(255,77,106,.3);color:var(--err)}
 .status.warn{border-color:rgba(255,200,77,.3);color:var(--warn)}
 .status.load{border-color:rgba(139,111,255,.3);color:#a899ff}
 
-/* ── PILLS ── */
+/* PILLS */
 .pills{display:flex;flex-wrap:wrap;gap:7px}
 .pill{display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border-radius:999px;background:rgba(255,255,255,.04);border:1px solid var(--b);font-family:var(--mono);font-size:11px;color:var(--m)}
 .pill b{color:var(--t);font-weight:700}
 
-/* ── CANVAS ── */
+/* CANVAS */
 .cv-wrap{position:relative;background:var(--bg);min-height:260px;overflow:hidden}
 .cv-wrap canvas{display:block;width:100%}
 .cv-empty{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--m);font-family:var(--mono);font-size:12px;gap:8px}
@@ -123,7 +123,7 @@ select option{background:var(--s2)}
 .leg-item{display:flex;align-items:center;gap:6px}
 .leg-dot{width:9px;height:9px;border-radius:50%}
 
-/* ── NOTE TABLE ── */
+/* NOTE TABLE */
 .nt-wrap{max-height:200px;overflow-y:auto;border-top:1px solid var(--b);scrollbar-width:thin;scrollbar-color:var(--d) transparent}
 .nt{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:11px}
 .nt th{position:sticky;top:0;background:var(--s2);color:var(--m);font-weight:500;padding:7px 12px;text-align:left;letter-spacing:.06em;border-bottom:1px solid var(--b);font-size:10px;text-transform:uppercase}
@@ -132,16 +132,16 @@ select option{background:var(--s2)}
 .nt tr:hover td{background:rgba(255,255,255,.02)}
 .ndot{width:9px;height:9px;border-radius:50%;display:inline-block}
 
-/* ── EXPORT ── */
+/* EXPORT */
 .code{background:var(--bg);border:1px solid var(--b);border-radius:13px;padding:13px 15px;max-height:220px;overflow:auto;font-family:var(--mono);font-size:11px;color:#7aceff;line-height:1.7;white-space:pre;scrollbar-width:thin;scrollbar-color:var(--d) transparent}
 
-/* ── SCROLLBAR ── */
+/* SCROLLBAR */
 ::-webkit-scrollbar{width:5px;height:5px}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:var(--d);border-radius:3px}
 ::-webkit-scrollbar-thumb:hover{background:var(--m)}
 
-/* ── RESPONSIVE ── */
+/* RESPONSIVE */
 @media(max-width:900px){.grid{grid-template-columns:1fr}.hdr{flex-direction:column}.stats-col{flex-direction:row;flex-wrap:wrap;min-width:0}}
 @media(max-width:540px){.r2,.r3{grid-template-columns:1fr}.btn-row{flex-direction:column}}
 </style>
@@ -354,6 +354,33 @@ function init() {
     return [...map.values()].sort((a, b) => a.time - b.time || a.midi - b.midi || a.dur - b.dur);
   }
 
+  function getDims() {
+    const dpr = window.devicePixelRatio || 1;
+    const W = cvWrap.clientWidth || 600;
+    const H = 300;
+    return { dpr, W, H };
+  }
+
+  function sizeCanvases() {
+    const { dpr, W, H } = getDims();
+    [roll].forEach(cv => {
+      cv.width = W * dpr;
+      cv.height = H * dpr;
+      cv.style.width = W + 'px';
+      cv.style.height = H + 'px';
+    });
+
+    const overlay = document.getElementById('playOverlay');
+    if (overlay) {
+      overlay.width = W * dpr;
+      overlay.height = H * dpr;
+      overlay.style.width = W + 'px';
+      overlay.style.height = H + 'px';
+    }
+
+    return { dpr, W, H };
+  }
+
   function loadBuffer(buf, name) {
     try {
       midi = new Midi(buf);
@@ -403,7 +430,6 @@ function init() {
     pitchInfo = new Map();
     pitches = [];
     const seen = new Set();
-
     for (const ev of events) {
       if (!seen.has(ev.midi)) {
         seen.add(ev.midi);
@@ -445,10 +471,12 @@ function init() {
     }
 
     renderTable();
+    drawStaticRoll();
     renderRoll(-1);
     dlBtn.disabled = false;
     cpBtn.disabled = false;
     stopBtn.disabled = true;
+    playBtn.disabled = false;
   }
 
   function renderTable() {
@@ -469,19 +497,15 @@ function init() {
     }
   }
 
-  function renderRoll(playhead) {
+  function drawStaticRoll() {
+    const { dpr, W, H } = sizeCanvases();
     const ctx = roll.getContext('2d');
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, W, H);
+
     if (!events.length) {
       cvEmpty.style.display = 'flex';
       leg.style.display = 'none';
-      const W = cvWrap.clientWidth || 600;
-      const H = 300;
-      const dpr = window.devicePixelRatio || 1;
-      roll.width = W * dpr;
-      roll.height = H * dpr;
-      roll.style.width = W + 'px';
-      roll.style.height = H + 'px';
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.fillStyle = '#07080f';
       ctx.fillRect(0, 0, W, H);
       return;
@@ -489,15 +513,6 @@ function init() {
 
     cvEmpty.style.display = 'none';
     leg.style.display = 'flex';
-
-    const dpr = window.devicePixelRatio || 1;
-    const W = cvWrap.clientWidth || 600;
-    const H = 300;
-    roll.width = W * dpr;
-    roll.height = H * dpr;
-    roll.style.width = W + 'px';
-    roll.style.height = H + 'px';
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
     ctx.fillStyle = '#07080f';
     ctx.fillRect(0, 0, W, H);
@@ -551,28 +566,41 @@ function init() {
       const x = LABEL_W + ev.time * pxPerSec;
       const w = Math.max(2, ev.dur * pxPerSec - 1);
       const y = pitchY(ev.midi);
-      const active = playhead >= ev.time && playhead <= ev.time + ev.dur;
 
-      ctx.shadowColor = active ? info.color : 'transparent';
-      ctx.shadowBlur = active ? 10 : 0;
-      ctx.fillStyle = active ? info.color : info.color + '88';
+      ctx.fillStyle = info.color + '88';
       ctx.fillRect(x, y - laneH / 2 + 1, w, laneH - 2);
     }
-    ctx.shadowBlur = 0;
+  }
 
-    if (playhead >= 0) {
-      const px = LABEL_W + playhead * pxPerSec;
-      ctx.save();
-      ctx.strokeStyle = '#ff9f4d';
-      ctx.lineWidth = 2;
-      ctx.shadowColor = '#ff9f4d';
-      ctx.shadowBlur = 14;
-      ctx.beginPath();
-      ctx.moveTo(px, 0);
-      ctx.lineTo(px, H);
-      ctx.stroke();
-      ctx.restore();
-    }
+  function renderRoll(playhead) {
+    const overlay = document.getElementById('playOverlay');
+    if (!overlay) return;
+
+    const { dpr, W, H } = getDims();
+    const ctx = overlay.getContext('2d');
+    overlay.width = W * dpr;
+    overlay.height = H * dpr;
+    overlay.style.width = W + 'px';
+    overlay.style.height = H + 'px';
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, W, H);
+
+    if (!events.length || playhead < 0) return;
+
+    const LABEL_W = 48;
+    const pxPerSec = (W - LABEL_W) / Math.max(songDuration, 1);
+    const px = LABEL_W + playhead * pxPerSec;
+
+    ctx.save();
+    ctx.strokeStyle = '#ff9f4d';
+    ctx.lineWidth = 2;
+    ctx.shadowColor = '#ff9f4d';
+    ctx.shadowBlur = 14;
+    ctx.beginPath();
+    ctx.moveTo(px, 0);
+    ctx.lineTo(px, H);
+    ctx.stroke();
+    ctx.restore();
   }
 
   function buildLevel() {
@@ -668,8 +696,9 @@ function init() {
       });
     }
 
-    const AWAY_Z = 500;
-    const SNAP_DT = 0.012;
+    const AWAY_Z = 2.5;
+    const HIT_Z = 0;
+    const HOLD = 0.10;
     const frames = [];
 
     frames.push({
@@ -680,21 +709,36 @@ function init() {
 
     for (const ev of events) {
       const pos = trigPositions.get(ev.midi);
+      const t0 = Math.max(0, ev.time - HOLD);
+      const t1 = ev.time;
+      const t2 = ev.time + HOLD;
 
       frames.push({
-        time: Math.max(0, ev.time - SNAP_DT),
+        time: t0,
         position: { x: pos.x, y: pos.y, z: AWAY_Z },
         rotation: { x: 0, y: 0, z: 0, w: 1 }
       });
 
       frames.push({
-        time: ev.time,
-        position: { x: pos.x, y: pos.y, z: 0 },
+        time: t1,
+        position: { x: pos.x, y: pos.y, z: AWAY_Z },
         rotation: { x: 0, y: 0, z: 0, w: 1 }
       });
 
       frames.push({
-        time: ev.time + SNAP_DT,
+        time: t1,
+        position: { x: pos.x, y: pos.y, z: HIT_Z },
+        rotation: { x: 0, y: 0, z: 0, w: 1 }
+      });
+
+      frames.push({
+        time: t2,
+        position: { x: pos.x, y: pos.y, z: HIT_Z },
+        rotation: { x: 0, y: 0, z: 0, w: 1 }
+      });
+
+      frames.push({
+        time: t2,
         position: { x: pos.x, y: pos.y, z: AWAY_Z },
         rotation: { x: 0, y: 0, z: 0, w: 1 }
       });
@@ -766,6 +810,7 @@ function init() {
     stopBtn.disabled = true;
     dlBtn.disabled = false;
     cpBtn.disabled = false;
+    drawStaticRoll();
     renderRoll(-1);
   }
 
@@ -784,7 +829,7 @@ function init() {
     }
     schedNodes = [];
     stopBtn.disabled = true;
-    playBtn.disabled = !levelJson;
+    playBtn.disabled = !events.length ? true : false;
     playTimeEl.textContent = '';
     renderRoll(-1);
   }
@@ -889,10 +934,14 @@ function init() {
   window.addEventListener('resize', () => {
     clearTimeout(resizeT);
     resizeT = setTimeout(() => {
-      if (events.length) renderRoll(-1);
+      if (events.length) {
+        drawStaticRoll();
+        renderRoll(-1);
+      }
     }, 120);
   });
 
+  drawStaticRoll();
   renderRoll(-1);
 }
 </script>
