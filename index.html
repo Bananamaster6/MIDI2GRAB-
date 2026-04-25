@@ -414,7 +414,20 @@ input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;bac
     <div class="panel">
       <div class="ph"><div class="ph-dots"><span class="da"></span><span class="db"></span><span class="dc"></span></div><span class="ph-title">midi_stack.compiler</span></div>
       <div class="pb">
-        <p style="font-family:var(--mono);font-size:11px;color:var(--m);line-height:1.7">Stack up to 5 MIDI files. Each added file is placed above the previous (offset in pitch). Adjust the vertical offset per layer, then compile into one merged level.</p>
+        <p style="font-family:var(--mono);font-size:11px;color:var(--m);line-height:1.7">Stack up to 5 MIDI files. Each added file is placed above the previous (offset in pitch). Optionally merge into an existing <code style="color:var(--a)">.level</code> or <code style="color:var(--a)">.json</code> file to add music to an existing Grab level.</p>
+
+        <!-- Optional base level drop -->
+        <div class="field">
+          <label>Base Level <span style="color:var(--m);font-weight:400;text-transform:none;letter-spacing:0">(optional — merge into existing)</span></label>
+          <div class="drop" id="baseLevelDrop" style="padding:16px">
+            <input type="file" id="baseLevelInput" accept=".level,.json"/>
+            <div class="drop-ico" style="font-size:20px">⊞</div>
+            <div class="drop-txt" id="baseLevelTxt"><strong>Drop .level or .json here</strong><br>or click — leave empty to create new</div>
+          </div>
+          <div style="display:flex;justify-content:flex-end;margin-top:-4px">
+            <button class="btn btn-d" id="clearBaseLevelBtn" style="padding:5px 11px;font-size:11px;display:none">✕ Clear base level</button>
+          </div>
+        </div>
 
         <div class="midi-stack" id="midiStack">
           <!-- slots rendered by JS -->
@@ -451,6 +464,19 @@ input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;bac
           </div>
           <div class="voice-hint">Recommended: 15–20 blocks.</div>
         </div>
+
+        <!-- Output format toggle -->
+        <div class="field">
+          <label>Output Format</label>
+          <div style="display:flex;gap:8px">
+            <button class="comp-btn active" id="fmtJson" style="flex:1;text-align:center;padding:10px">⬡ .json</button>
+            <button class="comp-btn" id="fmtLevel" style="flex:1;text-align:center;padding:10px">⬡ .level</button>
+          </div>
+          <div style="font-family:var(--mono);font-size:10px;color:var(--m);margin-top:4px" id="fmtHint">
+            JSON: standard readable format · .level: Grab native format (same data, different extension)
+          </div>
+        </div>
+
         <div class="btn-row">
           <button class="btn btn-p" id="cmpBuildBtn" disabled>⚡ Compile & Build</button>
           <button class="btn btn-s" id="cmpPreviewBtn" disabled>▶ Preview Mix</button>
@@ -468,17 +494,31 @@ input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;bac
         <canvas id="cmpRollCanvas" height="300"></canvas>
         <div class="cv-empty" id="cmpCvEmpty"><span class="ico">⊕</span><span>Stack preview appears here</span></div>
       </div>
-      <div class="cv-leg">
+      <div class="cv-leg" id="cmpCvLeg">
         <span style="font-family:var(--mono);font-size:11px;color:var(--m)">Each color = one MIDI layer</span>
       </div>
     </div>
+
+    <!-- Base level info card (shown when loaded) -->
+    <div class="panel" id="baseLevelInfoPanel" style="display:none">
+      <div class="ph"><div class="ph-dots"><span class="da"></span><span class="db"></span><span class="dc"></span></div><span class="ph-title" id="baseLevelInfoTitle">base_level.info</span></div>
+      <div class="pb">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+          <div class="stat-card"><div class="stat-v" id="blNodes">—</div><div class="stat-l">Existing nodes</div></div>
+          <div class="stat-card"><div class="stat-v" id="blTitle">—</div><div class="stat-l">Level title</div></div>
+          <div class="stat-card"><div class="stat-v" id="blFmt">—</div><div class="stat-l">Format ver</div></div>
+        </div>
+        <div class="status ok" style="font-size:10px" id="blStatus">Base level loaded — new music nodes will be merged in.</div>
+      </div>
+    </div>
+
     <div class="panel" id="cmpOutputPanel" style="display:none">
-      <div class="ph"><div class="ph-dots"><span class="da"></span><span class="db"></span><span class="dc"></span></div><span class="ph-title">compiled_export.json</span></div>
+      <div class="ph"><div class="ph-dots"><span class="da"></span><span class="db"></span><span class="dc"></span></div><span class="ph-title" id="cmpOutputTitle">compiled_export.json</span></div>
       <div class="pb">
         <div class="code" id="cmpCodeBox"></div>
         <div class="btn-row">
           <button class="btn btn-p" id="cmpDlBtn">⬇ Download</button>
-          <button class="btn btn-s" id="cmpCpBtn">⎘ Copy</button>
+          <button class="btn btn-s" id="cmpCpBtn">⎘ Copy JSON</button>
         </div>
         <div class="status ok" id="cmpExpStatus"></div>
       </div>
@@ -1132,7 +1172,10 @@ function initComposer(){
 (function(){
   const getCmpVoice=setupVoiceSlider('cmpVoiceSlider','cmpVoiceNum','cmpVoiceBadge');
   const MAX_SLOTS=5;
-  let midiSlots=[]; // {name, events, timeOffset, color}
+  let midiSlots=[];
+  let baseLevelData=null;   // parsed JSON of an existing .level/.json file (optional)
+  let baseLevelName='';
+  let outputFmt='json';     // 'json' or 'level'
   let cmpAC=null,cmpPlaying=false,cmpScheduled=[],cmpStartAC=0,cmpRafId=0;
   let cmpLevelJson=null;
 
@@ -1146,17 +1189,96 @@ function initComposer(){
   const cmpBuildBtn=document.getElementById('cmpBuildBtn');
   const cmpPreviewBtn=document.getElementById('cmpPreviewBtn');
   const cmpStopBtn=document.getElementById('cmpStopBtn');
+  const baseLevelDrop=document.getElementById('baseLevelDrop');
+  const baseLevelInput=document.getElementById('baseLevelInput');
+  const baseLevelTxt=document.getElementById('baseLevelTxt');
+  const clearBaseBtn=document.getElementById('clearBaseLevelBtn');
+  const baseLevelInfoPanel=document.getElementById('baseLevelInfoPanel');
+  const cmpOutputPanel=document.getElementById('cmpOutputPanel');
+  const cmpOutputTitle=document.getElementById('cmpOutputTitle');
+  const fmtJsonBtn=document.getElementById('fmtJson');
+  const fmtLevelBtn=document.getElementById('fmtLevel');
 
   const ss=(msg,cls='')=>{cmpStatusEl.className='status'+(cls?' '+cls:'');cmpStatusEl.textContent=msg;};
 
-  // Pitch offset per layer (semitones above previous)
-  const LAYER_PITCH_OFFSETS=[0,12,24,36,48]; // each layer 1 octave above
+  // ── Format toggle ───────────────────────────────────
+  function setFmt(fmt){
+    outputFmt=fmt;
+    fmtJsonBtn.classList.toggle('active',fmt==='json');
+    fmtLevelBtn.classList.toggle('active',fmt==='level');
+    fmtJsonBtn.textContent=fmt==='json'?'✦ .json':'⬡ .json';
+    fmtLevelBtn.textContent=fmt==='level'?'✦ .level':'⬡ .level';
+    if(cmpLevelJson) updateOutputTitle();
+  }
+  function updateOutputTitle(){
+    const ext=outputFmt==='level'?'.level':'.json';
+    cmpOutputTitle.textContent='compiled_export'+ext;
+  }
+  fmtJsonBtn.addEventListener('click',()=>setFmt('json'));
+  fmtLevelBtn.addEventListener('click',()=>setFmt('level'));
+  setFmt('json');
+
+  // ── Base level (.level / .json) loading ────────────
+  function loadBaseLevel(file){
+    if(!/\.(level|json)$/i.test(file.name)){ss('Base level must be .level or .json','err');return;}
+    const r=new FileReader();
+    r.onload=e=>{
+      let parsed;
+      try{parsed=JSON.parse(e.target.result);}
+      catch(err){ss('Could not parse level file: '+err.message,'err');return;}
+      baseLevelData=parsed;
+      baseLevelName=file.name;
+
+      // Show info
+      baseLevelInfoPanel.style.display='block';
+      document.getElementById('baseLevelInfoTitle').textContent=file.name;
+      document.getElementById('blNodes').textContent=Array.isArray(parsed.levelNodes)?parsed.levelNodes.length:'?';
+      document.getElementById('blTitle').textContent=(parsed.title||'Untitled').slice(0,12);
+      document.getElementById('blFmt').textContent=parsed.formatVersion??'?';
+      document.getElementById('blStatus').textContent=`Base level loaded: "${parsed.title||file.name}" — new music nodes will be appended.`;
+
+      // Update drop zone
+      baseLevelDrop.style.borderColor='rgba(77,255,200,.5)';
+      baseLevelDrop.style.background='rgba(77,255,200,.04)';
+      baseLevelTxt.innerHTML=`<strong style="color:var(--a)">${file.name}</strong><br>${Array.isArray(parsed.levelNodes)?parsed.levelNodes.length:0} existing nodes`;
+      clearBaseBtn.style.display='inline-flex';
+      ss(`Base level "${file.name}" loaded. MIDI will be merged in.`,'ok');
+    };
+    r.onerror=()=>ss('Could not read file','err');
+    r.readAsText(file);
+  }
+
+  function clearBaseLevel(){
+    baseLevelData=null;baseLevelName='';
+    baseLevelInfoPanel.style.display='none';
+    baseLevelDrop.style.borderColor='';baseLevelDrop.style.background='';
+    baseLevelTxt.innerHTML='<strong>Drop .level or .json here</strong><br>or click — leave empty to create new';
+    clearBaseBtn.style.display='none';
+    baseLevelInput.value='';
+    ss('Base level cleared. Will create a new level.','ok');
+  }
+
+  baseLevelInput.addEventListener('change',e=>{if(e.target.files[0]) loadBaseLevel(e.target.files[0]);baseLevelInput.value='';});
+  baseLevelDrop.addEventListener('dragover',e=>{e.preventDefault();baseLevelDrop.classList.add('ov');});
+  baseLevelDrop.addEventListener('dragleave',()=>baseLevelDrop.classList.remove('ov'));
+  baseLevelDrop.addEventListener('drop',e=>{e.preventDefault();baseLevelDrop.classList.remove('ov');if(e.dataTransfer.files[0]) loadBaseLevel(e.dataTransfer.files[0]);});
+  clearBaseBtn.addEventListener('click',clearBaseLevel);
+
+  // ── MIDI slots ──────────────────────────────────────
+  const LAYER_PITCH_OFFSETS=[0,12,24,36,48];
 
   function renderSlots(){
     stackEl.innerHTML='';
     const header=document.createElement('div');header.className='stack-header';
     header.textContent=`MIDI FILES (${midiSlots.length}/5) — each layer stacked above previous`;
     stackEl.appendChild(header);
+
+    if(midiSlots.length===0){
+      const empty=document.createElement('div');
+      empty.style.cssText='font-family:var(--mono);font-size:11px;color:var(--m);padding:10px 2px;';
+      empty.textContent='No MIDI files added yet.';
+      stackEl.appendChild(empty);
+    }
 
     midiSlots.forEach((slot,i)=>{
       const row=document.createElement('div');row.className='midi-slot filled';
@@ -1177,11 +1299,9 @@ function initComposer(){
       stackEl.appendChild(row);
     });
 
-    // Remove handlers
     stackEl.querySelectorAll('.slot-remove').forEach(btn=>{
       btn.addEventListener('click',()=>{midiSlots.splice(+btn.dataset.idx,1);renderSlots();drawCmpRoll();updateCmpButtons();});
     });
-    // Offset handlers
     stackEl.querySelectorAll('.offset-input').forEach(inp=>{
       inp.addEventListener('change',()=>{midiSlots[+inp.dataset.idx].timeOffset=Math.max(0,+inp.value||0);drawCmpRoll();});
     });
@@ -1195,7 +1315,7 @@ function initComposer(){
     cmpBuildBtn.disabled=!has;cmpPreviewBtn.disabled=!has;
   }
 
-  function parseMidi(buf,name,cb){
+  function parseMidiBuffer(buf,name,cb){
     let midi;try{midi=new Midi(buf);}catch(e){ss('Parse error: '+e.message,'err');return;}
     const raw=[];
     for(const t of midi.tracks) for(const n of t.notes) raw.push({midi:n.midi,time:n.time,dur:Math.max(.04,n.duration),vel:n.velocity??0.8});
@@ -1210,7 +1330,7 @@ function initComposer(){
     if(!/\.(mid|midi)$/i.test(file.name)){ss('Need a .mid or .midi file','err');return;}
     const r=new FileReader();
     r.onload=e=>{
-      parseMidi(e.target.result,file.name.replace(/\.(mid|midi)$/i,''),slot=>{
+      parseMidiBuffer(e.target.result,file.name.replace(/\.(mid|midi)$/i,''),slot=>{
         slot.color=layerColors[midiSlots.length];
         midiSlots.push(slot);
         renderSlots();drawCmpRoll();
@@ -1226,17 +1346,57 @@ function initComposer(){
   cmpDropEl.addEventListener('dragleave',()=>cmpDropEl.classList.remove('ov'));
   cmpDropEl.addEventListener('drop',e=>{e.preventDefault();cmpDropEl.classList.remove('ov');[...e.dataTransfer.files].forEach(addMidiFile);});
 
+  // ── Merge helpers ───────────────────────────────────
   function getMergedEvents(){
     const all=[];
     midiSlots.forEach((slot,i)=>{
       const pitchShift=LAYER_PITCH_OFFSETS[i];
-      for(const ev of slot.events){
-        all.push({...ev,midi:ev.midi+pitchShift,time:ev.time+slot.timeOffset});
-      }
+      for(const ev of slot.events) all.push({...ev,midi:ev.midi+pitchShift,time:ev.time+slot.timeOffset});
     });
     return all.sort((a,b)=>a.time-b.time||a.midi-b.midi);
   }
 
+  // Merge new music nodes into an existing level JSON.
+  // Re-indexes new node objectIDs to avoid collisions with existing ones.
+  function mergeIntoBaseLevel(baseJson, newMusicJson){
+    const merged=JSON.parse(JSON.stringify(baseJson)); // deep clone
+
+    // Find the highest existing objectID so new ones don't collide
+    const existingNodes=Array.isArray(merged.levelNodes)?merged.levelNodes:[];
+    const maxId=existingNodes.reduce((mx,n)=>Math.max(mx,n.objectID||0),0);
+    const offset=maxId; // shift all new node IDs by this
+
+    // Clone & reindex new music nodes
+    const newNodes=JSON.parse(JSON.stringify(newMusicJson.levelNodes||[]));
+
+    // Build a mapping from old objectID → new objectID
+    const idMap=new Map();
+    newNodes.forEach(n=>idMap.set(n.objectID, n.objectID+offset));
+
+    // Apply remapping recursively
+    function remapIds(obj){
+      if(Array.isArray(obj)){obj.forEach(remapIds);return;}
+      if(obj&&typeof obj==='object'){
+        for(const k of Object.keys(obj)){
+          if(k==='objectID'&&typeof obj[k]==='number') obj[k]=(idMap.get(obj[k])||obj[k]+offset);
+          else remapIds(obj[k]);
+        }
+      }
+    }
+    remapIds(newNodes);
+
+    // Append
+    merged.levelNodes=[...existingNodes,...newNodes];
+
+    // Merge metadata fields
+    merged.description=(merged.description||'')+(merged.description?' + ':'')+( newMusicJson.description||'MIDI music');
+    if(!merged.tags) merged.tags=[];
+    (newMusicJson.tags||[]).forEach(t=>{if(!merged.tags.includes(t)) merged.tags.push(t);});
+
+    return merged;
+  }
+
+  // ── Canvas preview ──────────────────────────────────
   function drawCmpRoll(){
     const dpr=window.devicePixelRatio||1;
     const W=cmpCvWrap.clientWidth||600,H=300;
@@ -1250,26 +1410,34 @@ function initComposer(){
     if(!merged.length) return;
     const allDur=Math.max(...merged.map(e=>e.time+e.dur));
     const pitches=[...new Set(merged.map(e=>e.midi))].sort((a,b)=>a-b);
-    const minP=pitches[0],maxP=pitches[pitches.length-1],span=Math.max(maxP-minP,1);
+    const minP=pitches[0],span=Math.max(pitches[pitches.length-1]-minP,1);
     const LW=48,pps=(W-LW)/Math.max(allDur,1),lH=Math.min(18,(H-18)/(span+1));
     const pY=m=>H-8-(m-minP+.5)*lH;
     ctx.strokeStyle='rgba(255,255,255,.04)';ctx.lineWidth=1;
-    for(let t=0;t<=allDur;t+=Math.ceil(allDur/10)){const x=LW+t*pps;ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();ctx.fillStyle='rgba(255,255,255,.15)';ctx.font='9px Space Mono,monospace';ctx.fillText(t.toFixed(0)+'s',x+2,H-3);}
+    const step=Math.max(1,Math.ceil(allDur/10));
+    for(let t=0;t<=allDur;t+=step){
+      const x=LW+t*pps;ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();
+      ctx.fillStyle='rgba(255,255,255,.15)';ctx.font='9px Space Mono,monospace';ctx.fillText(t.toFixed(0)+'s',x+2,H-3);
+    }
     midiSlots.forEach((slot,si)=>{
       const pitchShift=LAYER_PITCH_OFFSETS[si];
       for(const ev of slot.events){
         const m=ev.midi+pitchShift,t=ev.time+slot.timeOffset;
-        const x=LW+t*pps,y=pY(m),w=Math.max(2,ev.dur*pps-1),h=lH-1;
-        ctx.fillStyle=slot.color+'88';ctx.fillRect(x,y-lH/2+1,w,h);
+        const x=LW+t*pps,y=pY(m),w=Math.max(2,ev.dur*pps-1);
+        ctx.fillStyle=slot.color+'88';ctx.fillRect(x,y-lH/2+1,w,lH-1);
       }
     });
-    // Layer legend
     midiSlots.forEach((slot,i)=>{
-      ctx.fillStyle=slot.color;ctx.font='9px Space Mono,monospace';
-      ctx.fillText(`L${i+1}: ${slot.name.slice(0,14)}`,LW+4,12+i*13);
+      ctx.fillStyle=slot.color;ctx.font='bold 9px Space Mono,monospace';
+      ctx.fillText(`L${i+1}: ${slot.name.slice(0,16)}`,LW+4,12+i*13);
     });
+    if(baseLevelData){
+      ctx.fillStyle='rgba(77,255,200,.6)';ctx.font='9px Space Mono,monospace';
+      ctx.fillText(`⊞ Base: ${baseLevelName.slice(0,20)} (${Array.isArray(baseLevelData.levelNodes)?baseLevelData.levelNodes.length:0} nodes)`,LW+4,H-14);
+    }
   }
 
+  // ── Audio preview ───────────────────────────────────
   function getCmpAC(){if(!cmpAC) cmpAC=new(window.AudioContext||window.webkitAudioContext)();if(cmpAC.state==='suspended') cmpAC.resume();return cmpAC;}
 
   function stopCmpPlay(){
@@ -1280,7 +1448,8 @@ function initComposer(){
 
   function startCmpPlay(){
     if(!midiSlots.length) return;stopCmpPlay();
-    const ac=getCmpAC();const vol=+document.getElementById('cmpVol').value||.8;
+    const ac=getCmpAC();
+    const vol=+document.getElementById('cmpVol').value||.8;
     const waveIdx=+document.getElementById('cmpWaveSel').value;
     const wt=['sine','square','triangle','sawtooth'][Math.min(waveIdx,3)]||'sawtooth';
     const atk=+document.getElementById('cmpAtk').value||.01;
@@ -1307,35 +1476,58 @@ function initComposer(){
   cmpPreviewBtn.addEventListener('click',startCmpPlay);
   cmpStopBtn.addEventListener('click',stopCmpPlay);
 
+  // ── Build ───────────────────────────────────────────
   cmpBuildBtn.addEventListener('click',()=>{
     if(!midiSlots.length) return;
     const evts=getMergedEvents();
     const VC=getCmpVoice();
-    const json=buildLevelJSON({events:evts,voiceCount:VC,
+    const musicJson=buildLevelJSON({
+      events:evts,voiceCount:VC,
       spacing:+document.getElementById('cmpSpacing').value||3,
       vol:+document.getElementById('cmpVol').value||.8,
       atk:+document.getElementById('cmpAtk').value||.01,
       wave:+document.getElementById('cmpWaveSel').value,
-      title:'compiled_level'});
-    cmpLevelJson=json;
-    const s=JSON.stringify(json,null,2);
+      title: baseLevelData?(baseLevelData.title||'compiled_level'):'compiled_level'
+    });
+
+    // Merge into base level if one is loaded, otherwise use fresh
+    cmpLevelJson = baseLevelData ? mergeIntoBaseLevel(baseLevelData, musicJson) : musicJson;
+
+    const s=JSON.stringify(cmpLevelJson,null,2);
     document.getElementById('cmpCodeBox').textContent=s.slice(0,8000)+(s.length>8000?'\n\n// ...truncated':'');
-    document.getElementById('cmpOutputPanel').style.display='block';
-    document.getElementById('cmpExpStatus').textContent=`${(s.length/1024).toFixed(1)} KB · ${json.levelNodes.length} nodes · ${midiSlots.length} layers merged`;
-    ss(`✓ Compiled ${midiSlots.length} layers → ${evts.length} notes · ${json.levelNodes.length} nodes`,'ok');
+    cmpOutputPanel.style.display='block';
+    updateOutputTitle();
+
+    const baseNote=baseLevelData?` + ${Array.isArray(baseLevelData.levelNodes)?baseLevelData.levelNodes.length:0} base nodes`:'';
+    document.getElementById('cmpExpStatus').textContent=
+      `${(s.length/1024).toFixed(1)} KB · ${cmpLevelJson.levelNodes.length} total nodes${baseNote} · ${midiSlots.length} MIDI layers`;
+
+    ss(`✓ ${baseLevelData?'Merged into base level':'Compiled'}: ${midiSlots.length} layers → ${evts.length} notes · ${cmpLevelJson.levelNodes.length} nodes`,'ok');
   });
 
+  // ── Download & Copy ─────────────────────────────────
   document.getElementById('cmpDlBtn').addEventListener('click',()=>{
     if(!cmpLevelJson) return;
     const s=JSON.stringify(cmpLevelJson,null,2);
-    const a=Object.assign(document.createElement('a'),{href:URL.createObjectURL(new Blob([s],{type:'application/json'})),download:'compiled_level.json'});
+    const ext=outputFmt==='level'?'.level':'.json';
+    const baseName=(cmpLevelJson.title||'compiled_level').replace(/\s+/g,'_').replace(/\.(level|json)$/i,'');
+    const mime=outputFmt==='level'?'application/octet-stream':'application/json';
+    const a=Object.assign(document.createElement('a'),{
+      href:URL.createObjectURL(new Blob([s],{type:mime})),
+      download:baseName+ext
+    });
     a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000);
-    document.getElementById('cmpExpStatus').textContent='Downloaded!';
+    document.getElementById('cmpExpStatus').textContent=`Downloaded as ${baseName+ext}`;
   });
+
   document.getElementById('cmpCpBtn').addEventListener('click',async()=>{
     if(!cmpLevelJson) return;
-    try{await navigator.clipboard.writeText(JSON.stringify(cmpLevelJson,null,2));document.getElementById('cmpExpStatus').textContent='Copied!';}
-    catch{document.getElementById('cmpExpStatus').textContent='Copy failed';}
+    try{
+      await navigator.clipboard.writeText(JSON.stringify(cmpLevelJson,null,2));
+      document.getElementById('cmpExpStatus').textContent='Copied to clipboard!';
+    }catch{
+      document.getElementById('cmpExpStatus').textContent='Copy failed — use Download instead.';
+    }
   });
 
   let resT;window.addEventListener('resize',()=>{clearTimeout(resT);resT=setTimeout(drawCmpRoll,120);});
