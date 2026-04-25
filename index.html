@@ -142,11 +142,11 @@ select option{background:var(--s2)}
     <h1>MIDI<span class="ac">→</span>GRAB</h1>
     <p>
       Shared note bank per pitch, reused across the whole MIDI.<br>
-      One trigger per pitch, one sound per pitch, and five reusable voice blocks total.
+      One trigger per pitch, one sound per pitch, and fifteen reusable voice blocks total.
     </p>
     <div class="tags">
       <span class="tag">✦ pitch reuse</span>
-      <span class="tag t2">✦ 1 main + 4 chord voices</span>
+      <span class="tag t2">✦ 15 voice lanes</span>
       <span class="tag t3">✦ fast preview</span>
     </div>
   </div>
@@ -523,8 +523,8 @@ function init() {
     const pillData = [
       ['Sound blocks', P],
       ['Trigger blocks', P],
-      ['Voice blocks', 5],
-      ['Total nodes', P * 2 + 5],
+      ['Voice blocks', 15],
+      ['Total nodes', P * 2 + 15],
       ['Instruments', instrumentCount]
     ];
     for (const [l, v] of pillData) {
@@ -666,7 +666,7 @@ function init() {
             volume: vol,
             waveType: wave,
             envelopeAttack: atk,
-            envelopeSustain: 0.10,
+            envelopeSustain: 0.85,
             envelopeRelease: 0.12,
             envelopePunch: 0,
             frequencyBase: Math.round(info.freq),
@@ -695,7 +695,7 @@ function init() {
       });
     }
 
-    const VOICE_COUNT = 5;
+    const VOICE_COUNT = 15;
     const BLOCK_ID_BASE = P * 2 + 1;
     const voiceBlockIds = Array.from({ length: VOICE_COUNT }, (_, i) => BLOCK_ID_BASE + i);
 
@@ -718,7 +718,7 @@ function init() {
             {
               triggerTargetSound: {
                 objectID: info.soundId,
-                mode: 3
+                mode: 1
               }
             }
           ]
@@ -729,10 +729,9 @@ function init() {
     const CHORD_WINDOW = 0.03;
     const HOLD = 0.10;
     const AWAY_Z_BASE = 2.5;
-    const AWAY_Z_STEP = 0.45;
+    const AWAY_Z_STEP = 0.25;
     const HIT_Z = 0;
     const framesByVoice = Array.from({ length: VOICE_COUNT }, () => []);
-    const voiceLastTime = Array.from({ length: VOICE_COUNT }, () => -1);
 
     function chordGroup(notes) {
       const groups = new Map();
@@ -748,7 +747,6 @@ function init() {
 
     const chordGroups = chordGroup(events);
 
-    // One main voice, four chord voices
     for (const group of chordGroups) {
       group.forEach((ev, idx) => {
         const voiceIdx = Math.min(idx, VOICE_COUNT - 1);
@@ -758,7 +756,7 @@ function init() {
         const t1 = ev.time;
         const t2 = ev.time + HOLD;
 
-        if (voiceLastTime[voiceIdx] < 0) {
+        if (framesByVoice[voiceIdx].length === 0) {
           framesByVoice[voiceIdx].push({
             time: 0,
             position: { x: 0, y: 0, z: awayZ },
@@ -766,37 +764,13 @@ function init() {
           });
         }
 
-        framesByVoice[voiceIdx].push({
-          time: t0,
-          position: { x: pos.x, y: pos.y, z: awayZ },
-          rotation: { x: 0, y: 0, z: 0, w: 1 }
-        });
-
-        framesByVoice[voiceIdx].push({
-          time: t1,
-          position: { x: pos.x, y: pos.y, z: awayZ },
-          rotation: { x: 0, y: 0, z: 0, w: 1 }
-        });
-
-        framesByVoice[voiceIdx].push({
-          time: t1,
-          position: { x: pos.x, y: pos.y, z: HIT_Z },
-          rotation: { x: 0, y: 0, z: 0, w: 1 }
-        });
-
-        framesByVoice[voiceIdx].push({
-          time: t2,
-          position: { x: pos.x, y: pos.y, z: HIT_Z },
-          rotation: { x: 0, y: 0, z: 0, w: 1 }
-        });
-
-        framesByVoice[voiceIdx].push({
-          time: t2,
-          position: { x: pos.x, y: pos.y, z: awayZ },
-          rotation: { x: 0, y: 0, z: 0, w: 1 }
-        });
-
-        voiceLastTime[voiceIdx] = t2;
+        framesByVoice[voiceIdx].push(
+          { time: t0, position: { x: pos.x, y: pos.y, z: awayZ }, rotation: { x: 0, y: 0, z: 0, w: 1 } },
+          { time: t1, position: { x: pos.x, y: pos.y, z: awayZ }, rotation: { x: 0, y: 0, z: 0, w: 1 } },
+          { time: t1, position: { x: pos.x, y: pos.y, z: HIT_Z },  rotation: { x: 0, y: 0, z: 0, w: 1 } },
+          { time: t2, position: { x: pos.x, y: pos.y, z: HIT_Z },  rotation: { x: 0, y: 0, z: 0, w: 1 } },
+          { time: t2, position: { x: pos.x, y: pos.y, z: awayZ }, rotation: { x: 0, y: 0, z: 0, w: 1 } }
+        );
       });
     }
 
@@ -840,7 +814,7 @@ function init() {
       formatVersion: 17,
       title: songNameEl.textContent.replace('.roll', ''),
       creators: 'MIDI2GRAB',
-      description: `${P} sounds · 5 voice blocks · ${events.length} keyframes`,
+      description: `${P} sounds · 15 voice blocks · ${events.length} keyframes`,
       tags: ['midi', 'music', 'generated'],
       maxCheckpointCount: 10,
       fogDensity: 0,
@@ -863,7 +837,7 @@ function init() {
     const jsonStr = JSON.stringify(levelJson, null, 2);
     codeBox.textContent = jsonStr.slice(0, 8000) + (jsonStr.length > 8000 ? '\n\n// ... truncated for preview' : '');
 
-    setStatus(`✓ ${P} sounds + ${P} triggers + 5 animated blocks. Total nodes: ${nodes.length}.`, 'ok');
+    setStatus(`✓ ${P} sounds + ${P} triggers + 15 animated blocks. Total nodes: ${nodes.length}.`, 'ok');
     setExpStatus(`${(jsonStr.length / 1024).toFixed(1)} KB · ${nodes.length} nodes`, 'ok');
     dlBtn.disabled = false;
     cpBtn.disabled = false;
