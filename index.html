@@ -83,6 +83,45 @@ select option{background:var(--s2)}
 .r2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .r3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
 
+/* Voice block slider field */
+.voice-field{display:flex;flex-direction:column;gap:9px;background:rgba(139,111,255,.05);border:1px solid rgba(139,111,255,.18);border-radius:13px;padding:13px 14px}
+.voice-field>label{font-family:var(--mono);font-size:10px;color:#a899ff;letter-spacing:.1em;text-transform:uppercase;display:flex;align-items:center;gap:8px}
+.voice-field>label::after{content:'';flex:1;height:1px;background:rgba(139,111,255,.2)}
+.voice-row{display:flex;align-items:center;gap:10px}
+.voice-slider-wrap{flex:1;position:relative}
+input[type=range]{
+  -webkit-appearance:none;appearance:none;
+  width:100%;height:5px;border-radius:999px;outline:none;cursor:pointer;border:none;padding:0;
+  background:linear-gradient(to right, var(--a2) 0%, var(--a2) var(--slider-pct, 9.39%), rgba(255,255,255,.1) var(--slider-pct, 9.39%), rgba(255,255,255,.1) 100%);
+  box-shadow:none;
+}
+input[type=range]:focus{box-shadow:none;border:none}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;appearance:none;
+  width:18px;height:18px;border-radius:50%;
+  background:var(--a2);border:2px solid #07080f;
+  box-shadow:0 0 10px rgba(139,111,255,.5);
+  cursor:pointer;transition:transform .12s,box-shadow .12s;
+}
+input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.15);box-shadow:0 0 18px rgba(139,111,255,.7)}
+input[type=range]::-moz-range-thumb{
+  width:18px;height:18px;border-radius:50%;
+  background:var(--a2);border:2px solid #07080f;
+  box-shadow:0 0 10px rgba(139,111,255,.5);
+  cursor:pointer;
+}
+.voice-num-input{width:66px;flex-shrink:0;text-align:center;background:var(--s2);border:1px solid rgba(139,111,255,.3);border-radius:9px;padding:7px 8px;font-family:var(--mono);font-size:13px;font-weight:700;color:#c4b5ff;-webkit-appearance:none;appearance:none}
+.voice-num-input:focus{border-color:var(--a2);box-shadow:0 0 0 3px rgba(139,111,255,.12)}
+.voice-hint{font-family:var(--mono);font-size:10px;color:rgba(139,111,255,.7);line-height:1.55;display:flex;align-items:flex-start;gap:6px}
+.voice-hint::before{content:'ⓘ';font-size:11px;color:var(--a2);flex-shrink:0;margin-top:-1px}
+.voice-badge{
+  display:inline-flex;align-items:center;gap:5px;
+  font-family:var(--mono);font-size:10px;font-weight:700;
+  padding:3px 9px;border-radius:999px;
+  background:rgba(139,111,255,.15);border:1px solid rgba(139,111,255,.3);color:#a899ff;
+  margin-left:auto;
+}
+
 .btn{border:none;border-radius:11px;padding:11px 18px;font-family:var(--ui);font-size:13px;font-weight:700;cursor:pointer;transition:all .17s;display:inline-flex;align-items:center;gap:7px;white-space:nowrap}
 .btn-p{background:var(--a);color:#040f0a;box-shadow:0 0 20px rgba(77,255,200,.18)}
 .btn-p:hover{filter:brightness(1.08);transform:translateY(-1px);box-shadow:0 0 30px rgba(77,255,200,.3)}
@@ -142,11 +181,11 @@ select option{background:var(--s2)}
     <h1>MIDI<span class="ac">→</span>GRAB</h1>
     <p>
       Shared note bank per pitch, reused across the whole MIDI.<br>
-      One trigger per pitch, one sound per pitch, and fifteen reusable voice blocks total.
+      One trigger per pitch, one sound per pitch, and reusable voice blocks total.
     </p>
     <div class="tags">
       <span class="tag">✦ pitch reuse</span>
-      <span class="tag t2">✦ 15 voice lanes</span>
+      <span class="tag t2">✦ voice lanes</span>
       <span class="tag t3">✦ fast preview</span>
     </div>
   </div>
@@ -190,6 +229,23 @@ select option{background:var(--s2)}
             <input type="number" id="vol" value="0.8" min="0.1" max="1" step="0.05"/></div>
           <div class="field"><label>Attack (s)</label>
             <input type="number" id="atk" value="0.01" min="0.001" max="0.5" step="0.005"/></div>
+        </div>
+
+        <!-- Voice block count slider -->
+        <div class="voice-field">
+          <label>
+            Animated Voice Blocks
+            <span class="voice-badge" id="voiceBadge">15 blocks</span>
+          </label>
+          <div class="voice-row">
+            <div class="voice-slider-wrap">
+              <input type="range" id="voiceSlider" min="1" max="150" value="15" step="1"/>
+            </div>
+            <input type="number" class="voice-num-input" id="voiceNum" min="1" max="150" value="15"/>
+          </div>
+          <div class="voice-hint">
+            Recommended: 15–20 blocks for best performance. Higher counts add more simultaneous note support but increase level complexity and load time.
+          </div>
         </div>
 
         <div class="btn-row">
@@ -264,6 +320,9 @@ function init() {
   const spacingEl = document.getElementById('spacing');
   const volEl = document.getElementById('vol');
   const atkEl = document.getElementById('atk');
+  const voiceSlider = document.getElementById('voiceSlider');
+  const voiceNum = document.getElementById('voiceNum');
+  const voiceBadge = document.getElementById('voiceBadge');
   const buildBtn = document.getElementById('buildBtn');
   const playBtn = document.getElementById('playBtn');
   const stopBtn = document.getElementById('stopBtn');
@@ -297,6 +356,42 @@ function init() {
   let playStartAC = 0;
   let schedNodes = [];
 
+  // ── Voice block slider sync ──────────────────────────────────────────────
+  function getVoiceCount() {
+    return Math.max(1, Math.min(150, parseInt(voiceSlider.value, 10) || 15));
+  }
+
+  function updateSliderFill(val) {
+    const pct = ((val - 1) / 149) * 100;
+    voiceSlider.style.setProperty('--slider-pct', pct.toFixed(2) + '%');
+  }
+
+  function syncVoiceUI(val) {
+    val = Math.max(1, Math.min(150, val));
+    voiceSlider.value = val;
+    voiceNum.value = val;
+    updateSliderFill(val);
+    const inRange = val >= 15 && val <= 20;
+    voiceBadge.textContent = val + (val === 1 ? ' block' : ' blocks');
+    voiceBadge.style.color = inRange ? 'var(--ok)' : val > 60 ? 'var(--warn)' : '#a899ff';
+    voiceBadge.style.borderColor = inRange ? 'rgba(77,255,200,.35)' : val > 60 ? 'rgba(255,200,77,.35)' : 'rgba(139,111,255,.3)';
+    voiceBadge.style.background = inRange ? 'rgba(77,255,200,.08)' : val > 60 ? 'rgba(255,200,77,.08)' : 'rgba(139,111,255,.15)';
+  }
+
+  voiceSlider.addEventListener('input', () => syncVoiceUI(parseInt(voiceSlider.value, 10)));
+  voiceNum.addEventListener('input', () => {
+    const v = parseInt(voiceNum.value, 10);
+    if (!isNaN(v)) syncVoiceUI(v);
+  });
+  voiceNum.addEventListener('blur', () => syncVoiceUI(parseInt(voiceNum.value, 10) || 15));
+  voiceNum.addEventListener('keydown', e => {
+    if (e.key === 'Enter') syncVoiceUI(parseInt(voiceNum.value, 10) || 15);
+  });
+
+  // init slider fill
+  syncVoiceUI(15);
+
+  // ── Helpers ──────────────────────────────────────────────────────────────
   const NOTE_NAMES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
   const noteName = m => NOTE_NAMES[((m % 12) + 12) % 12] + (Math.floor(m / 12) - 1);
   const midiFreq = m => 440 * Math.pow(2, (m - 69) / 12);
@@ -518,13 +613,14 @@ function init() {
     document.getElementById('sEvts').textContent = events.length;
     document.getElementById('sDur').textContent = songDuration.toFixed(1);
 
+    const VC = getVoiceCount();
     const instrumentCount = new Set(raw.map(n => `${n.instrumentProgram ?? 'x'}|${n.instrumentName}`)).size;
     pillsEl.innerHTML = '';
     const pillData = [
       ['Sound blocks', P],
       ['Trigger blocks', P],
-      ['Voice blocks', 15],
-      ['Total nodes', P * 2 + 15],
+      ['Voice blocks', VC],
+      ['Total nodes', P * 2 + VC],
       ['Instruments', instrumentCount]
     ];
     for (const [l, v] of pillData) {
@@ -541,6 +637,23 @@ function init() {
     playBtn.disabled = false;
     setStatus(`Ready. ${rawEvents.length} raw notes → ${events.length} compacted notes.`, 'ok');
   }
+
+  // Update pills when voice count changes
+  function refreshPills() {
+    if (!events.length) return;
+    const P = pitches.length;
+    const VC = getVoiceCount();
+    const pillLabels = ['Sound blocks','Trigger blocks','Voice blocks','Total nodes'];
+    const pillVals = [P, P, VC, P * 2 + VC];
+    const pillEls = pillsEl.querySelectorAll('.pill');
+    pillEls.forEach((el, i) => {
+      if (i < pillVals.length) el.querySelector('b').textContent = pillVals[i];
+    });
+  }
+
+  voiceSlider.addEventListener('input', refreshPills);
+  voiceNum.addEventListener('input', refreshPills);
+  voiceNum.addEventListener('blur', refreshPills);
 
   function renderTable() {
     const CAP = 300;
@@ -641,6 +754,7 @@ function init() {
     const vol = parseFloat(volEl.value) || 0.8;
     const atk = parseFloat(atkEl.value) || 0.01;
     const wave = parseInt(waveSel.value, 10);
+    const VOICE_COUNT = getVoiceCount();
 
     const P = pitches.length;
     const nodes = [];
@@ -695,7 +809,6 @@ function init() {
       });
     }
 
-    const VOICE_COUNT = 15;
     const BLOCK_ID_BASE = P * 2 + 1;
     const voiceBlockIds = Array.from({ length: VOICE_COUNT }, (_, i) => BLOCK_ID_BASE + i);
 
@@ -814,7 +927,7 @@ function init() {
       formatVersion: 17,
       title: songNameEl.textContent.replace('.roll', ''),
       creators: 'MIDI2GRAB',
-      description: `${P} sounds · 15 voice blocks · ${events.length} keyframes`,
+      description: `${P} sounds · ${VOICE_COUNT} voice blocks · ${events.length} keyframes`,
       tags: ['midi', 'music', 'generated'],
       maxCheckpointCount: 10,
       fogDensity: 0,
@@ -837,7 +950,7 @@ function init() {
     const jsonStr = JSON.stringify(levelJson, null, 2);
     codeBox.textContent = jsonStr.slice(0, 8000) + (jsonStr.length > 8000 ? '\n\n// ... truncated for preview' : '');
 
-    setStatus(`✓ ${P} sounds + ${P} triggers + 15 animated blocks. Total nodes: ${nodes.length}.`, 'ok');
+    setStatus(`✓ ${P} sounds + ${P} triggers + ${VOICE_COUNT} animated blocks. Total nodes: ${nodes.length}.`, 'ok');
     setExpStatus(`${(jsonStr.length / 1024).toFixed(1)} KB · ${nodes.length} nodes`, 'ok');
     dlBtn.disabled = false;
     cpBtn.disabled = false;
