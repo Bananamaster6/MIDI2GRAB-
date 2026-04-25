@@ -683,13 +683,13 @@ function init() {
             repeatSpeed: 0,
             flangerFrequency: 0,
             flangerDepth: 0,
-            lowPassFilterFrequency: 100,
+            lowPassFilterFrequency: 10000,
             highPassFilterFrequency: 0,
             reverbDelay: 0,
             reverbDecayFactor: 0
           },
           volume: vol,
-          maxRangeFactor: 100,
+          maxRangeFactor: 1000,
           repeat: false,
           name: `sound_${info.name.replace('#', 's')}_${m}`
         }
