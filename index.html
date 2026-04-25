@@ -332,6 +332,7 @@ function init() {
   const midiFreq = m => 440 * Math.pow(2, (m - 69) / 12);
   const pitchHue = m => ((m * 137.508) % 360);
   const pitchCol = m => `hsl(${pitchHue(m)},82%,62%)`;
+  const yieldFrame = () => new Promise(resolve => requestAnimationFrame(() => resolve()));
 
   function setStatus(msg, cls = '') {
     statusEl.className = 'status' + (cls ? ' ' + cls : '');
@@ -362,16 +363,19 @@ function init() {
 
   function getInstrumentName(track, idx) {
     const inst = track?.instrument || {};
-    const name = inst.name && inst.name !== 'unknown' ? inst.name : (track?.name || `Track ${idx + 1}`);
-    return name;
+    if (inst.name && inst.name !== 'unknown') return inst.name;
+    const num = inst.number ?? inst.program;
+    if (num != null) return `Instrument ${num}`;
+    return track?.name || `Track ${idx + 1}`;
   }
 
   function getInstrumentKey(track, idx) {
     const inst = track?.instrument || {};
-    const num = inst.number ?? inst.program ?? idx;
-    const name = getInstrumentName(track, idx);
-    const channel = track?.channel ?? idx;
-    return `${num}|${channel}|${name}`;
+    const num = inst.number ?? inst.program;
+    // Reuse the same note-set when the MIDI program repeats across tracks.
+    if (num != null) return `gm:${num}`;
+    const fallback = track?.name || `Track ${idx + 1}`;
+    return `track:${idx}|${fallback}`;
   }
 
   function assignVoices(noteEvents) {
@@ -434,7 +438,7 @@ function init() {
     return out;
   }
 
-  function loadBuffer(buf, name) {
+  async function loadBuffer(buf, name) {
     try {
       midi = new Midi(buf);
     } catch (e) {
@@ -451,13 +455,13 @@ function init() {
     });
 
     songNameEl.textContent = name.replace(/\.(mid|midi)$/i, '') + '.roll';
-    processAndRender();
-    buildBtn.disabled = false;
-    playBtn.disabled = false;
-    setStatus(`Loaded "${name}" · ${rawEvents.length} raw events → ${events.length} compacted events · ${groups.length} instrument group(s)`, 'ok');
+    buildBtn.disabled = true;
+    playBtn.disabled = true;
+    setStatus('Parsing MIDI…', 'load');
+    await processAndRender();
   }
 
-  function processAndRender() {
+  async function processAndRender() {
     if (!midi) return;
 
     const trackIdx = parseInt(trackSel.value, 10);
@@ -485,6 +489,10 @@ function init() {
     rawEvents = raw;
     events = compactEvents(raw, 0.04);
     songDuration = events.length ? Math.max(...events.map(e => e.time + e.dur)) : 0;
+
+    const largeMidi = rawEvents.length > 3000 || events.length > 3000;
+    setStatus(largeMidi ? 'Large MIDI detected — optimizing instrument groups…' : 'Grouping instruments…', 'load');
+    await yieldFrame();
 
     groups = buildGroups(events);
     groups.forEach((g, gi) => {
@@ -522,6 +530,8 @@ function init() {
     cpBtn.disabled = false;
     stopBtn.disabled = true;
     playBtn.disabled = false;
+    buildBtn.disabled = false;
+    setStatus(`Loaded "${songNameEl.textContent}" · ${rawEvents.length} raw events → ${events.length} compacted events · ${groups.length} instrument group(s)`, 'ok');
   }
 
   function renderTable() {
@@ -764,13 +774,13 @@ function init() {
               repeatSpeed: 0,
               flangerFrequency: 0,
               flangerDepth: 0,
-              lowPassFilterFrequency: 10000,
+              lowPassFilterFrequency: 100,
               highPassFilterFrequency: 0,
               reverbDelay: 0,
               reverbDecayFactor: 0
             },
             volume: vol,
-            maxRangeFactor: 1000,
+            maxRangeFactor: 100,
             repeat: false,
             name: `sound_${g.instrumentName.replace(/[^a-zA-Z0-9]+/g, '_')}_${noteName(m)}_${m}`
           }
@@ -861,8 +871,8 @@ function init() {
             isTransparent: false,
             isGrabbable: false,
             isGrapplable: false,
-            isPassable: false,
-            isAdditive: false,
+            isPassable: true,
+            isAdditive: true,
             specularBrightness: 0.2
           }
         });
@@ -880,7 +890,7 @@ function init() {
       title: songNameEl.textContent.replace('.roll', ''),
       creators: 'MIDI2GRAB',
       description: `${groups.length} instruments · ${soundCount} sounds · ${blockCount} animated blocks`,
-      tags: ['innovative'],
+      tags: ['midi', 'music', 'generated'],
       maxCheckpointCount: 10,
       fogDensity: 0,
       ambienceSettings: {
