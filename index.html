@@ -33,7 +33,9 @@ body::before{
 .orb1{width:500px;height:500px;background:rgba(77,255,200,.07);top:-200px;left:-150px}
 .orb2{width:400px;height:400px;background:rgba(139,111,255,.06);bottom:-150px;right:-100px}
 @keyframes orbmove{from{transform:translate(0,0) scale(1)}to{transform:translate(40px,30px) scale(1.08)}}
+
 .page{position:relative;z-index:1;max-width:1100px;margin:0 auto;padding:28px 20px 80px;display:flex;flex-direction:column;gap:20px}
+
 .hdr{
   background:var(--s1);border:1px solid var(--b);border-radius:18px;
   padding:32px 36px;display:flex;align-items:flex-start;justify-content:space-between;
@@ -51,7 +53,9 @@ body::before{
 .stat-card{background:rgba(255,255,255,.04);border:1px solid var(--b);border-radius:14px;padding:12px 16px;text-align:right}
 .stat-v{font-family:var(--mono);font-size:24px;color:var(--a);line-height:1;margin-bottom:3px}
 .stat-l{font-size:10px;color:var(--m);letter-spacing:.08em;text-transform:uppercase}
+
 .grid{display:grid;grid-template-columns:380px 1fr;gap:18px;align-items:start}
+
 .panel{background:var(--s1);border:1px solid var(--b);border-radius:18px;overflow:hidden}
 .ph{display:flex;align-items:center;gap:8px;padding:13px 18px;background:var(--s2);border-bottom:1px solid var(--b)}
 .ph-dots{display:flex;gap:5px}
@@ -59,6 +63,7 @@ body::before{
 .da{background:#ff5f57}.db{background:#febc2e}.dc{background:#28c840}
 .ph-title{font-family:var(--mono);font-size:11px;color:var(--m);letter-spacing:.08em}
 .pb{padding:18px;display:flex;flex-direction:column;gap:13px}
+
 .field{display:flex;flex-direction:column;gap:7px}
 .field>label{font-family:var(--mono);font-size:10px;color:var(--a);letter-spacing:.1em;text-transform:uppercase;display:flex;align-items:center;gap:8px}
 .field>label::after{content:'';flex:1;height:1px;background:var(--b)}
@@ -77,6 +82,7 @@ input:focus,select:focus{border-color:var(--a);box-shadow:0 0 0 3px rgba(77,255,
 select option{background:var(--s2)}
 .r2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .r3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+
 .btn{border:none;border-radius:11px;padding:11px 18px;font-family:var(--ui);font-size:13px;font-weight:700;cursor:pointer;transition:all .17s;display:inline-flex;align-items:center;gap:7px;white-space:nowrap}
 .btn-p{background:var(--a);color:#040f0a;box-shadow:0 0 20px rgba(77,255,200,.18)}
 .btn-p:hover{filter:brightness(1.08);transform:translateY(-1px);box-shadow:0 0 30px rgba(77,255,200,.3)}
@@ -88,14 +94,17 @@ select option{background:var(--s2)}
 .btn-d{background:transparent;color:var(--err);border:1px solid rgba(255,77,106,.3)}
 .btn-d:hover{background:rgba(255,77,106,.1)}
 .btn-row{display:flex;gap:9px;flex-wrap:wrap}
+
 .status{border-radius:11px;border:1px solid var(--b);background:var(--s2);padding:11px 13px;font-family:var(--mono);font-size:11px;color:var(--m);min-height:42px;line-height:1.6;transition:all .2s}
 .status.ok{border-color:rgba(77,255,200,.3);color:var(--ok)}
 .status.err{border-color:rgba(255,77,106,.3);color:var(--err)}
 .status.warn{border-color:rgba(255,200,77,.3);color:var(--warn)}
 .status.load{border-color:rgba(139,111,255,.3);color:#a899ff}
+
 .pills{display:flex;flex-wrap:wrap;gap:7px}
 .pill{display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border-radius:999px;background:rgba(255,255,255,.04);border:1px solid var(--b);font-family:var(--mono);font-size:11px;color:var(--m)}
 .pill b{color:var(--t);font-weight:700}
+
 .cv-wrap{position:relative;background:var(--bg);min-height:260px;overflow:hidden}
 .cv-wrap canvas{display:block;width:100%}
 .cv-empty{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--m);font-family:var(--mono);font-size:12px;gap:8px}
@@ -103,6 +112,7 @@ select option{background:var(--s2)}
 .cv-leg{display:flex;gap:12px;flex-wrap:wrap;align-items:center;padding:10px 18px;border-top:1px solid var(--b);font-family:var(--mono);font-size:11px;color:var(--m)}
 .leg-item{display:flex;align-items:center;gap:6px}
 .leg-dot{width:9px;height:9px;border-radius:50%}
+
 .nt-wrap{max-height:200px;overflow-y:auto;border-top:1px solid var(--b);scrollbar-width:thin;scrollbar-color:var(--d) transparent}
 .nt{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:11px}
 .nt th{position:sticky;top:0;background:var(--s2);color:var(--m);font-weight:500;padding:7px 12px;text-align:left;letter-spacing:.06em;border-bottom:1px solid var(--b);font-size:10px;text-transform:uppercase}
@@ -110,11 +120,14 @@ select option{background:var(--s2)}
 .nt tr:last-child td{border:none}
 .nt tr:hover td{background:rgba(255,255,255,.02)}
 .ndot{width:9px;height:9px;border-radius:50%;display:inline-block}
+
 .code{background:var(--bg);border:1px solid var(--b);border-radius:13px;padding:13px 15px;max-height:220px;overflow:auto;font-family:var(--mono);font-size:11px;color:#7aceff;line-height:1.7;white-space:pre;scrollbar-width:thin;scrollbar-color:var(--d) transparent}
+
 ::-webkit-scrollbar{width:5px;height:5px}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:var(--d);border-radius:3px}
 ::-webkit-scrollbar-thumb:hover{background:var(--m)}
+
 @media(max-width:900px){.grid{grid-template-columns:1fr}.hdr{flex-direction:column}.stats-col{flex-direction:row;flex-wrap:wrap;min-width:0}}
 @media(max-width:540px){.r2,.r3{grid-template-columns:1fr}.btn-row{flex-direction:column}}
 </style>
@@ -129,11 +142,11 @@ select option{background:var(--s2)}
     <h1>MIDI<span class="ac">→</span>GRAB</h1>
     <p>
       Shared note bank per pitch, reused across the whole MIDI.<br>
-      One trigger per pitch, one sound per pitch, and one teleport block per note event.
+      One trigger per pitch, one sound per pitch, and one teleport block total.
     </p>
     <div class="tags">
       <span class="tag">✦ pitch reuse</span>
-      <span class="tag t2">✦ chords supported</span>
+      <span class="tag t2">✦ one animated block</span>
       <span class="tag t3">✦ fast preview</span>
     </div>
   </div>
@@ -460,17 +473,14 @@ function init() {
 
     const raw = [];
     for (const t of tracks) {
-      const instrumentName = t.instrument?.name || t.name || 'Unknown';
-      const instrumentProgram = t.instrument?.number ?? t.instrument?.program ?? null;
       for (const n of t.notes) {
         raw.push({
           midi: n.midi,
           time: n.time,
           dur: Math.max(0.04, n.duration),
           vel: n.velocity ?? 0.8,
-          trackName: t.name || `Track ${t.name || ''}`,
-          instrumentName,
-          instrumentProgram
+          instrumentName: t.instrument?.name || t.name || 'Unknown',
+          instrumentProgram: t.instrument?.number ?? t.instrument?.program ?? null
         });
       }
       if (raw.length % 400 === 0) await sleep0();
@@ -514,8 +524,8 @@ function init() {
     const pillData = [
       ['Sound blocks', P],
       ['Trigger blocks', P],
-      ['Animated blocks', events.length],
-      ['Total nodes', P * 2 + events.length],
+      ['Animated block', 1],
+      ['Total nodes', P * 2 + 1],
       ['Instruments', instrumentCount]
     ];
     for (const [l, v] of pillData) {
@@ -636,7 +646,6 @@ function init() {
     const P = pitches.length;
     const nodes = [];
     const trigPositions = new Map();
-    const triggerNodeByPitch = new Map();
 
     pitches.forEach((m, idx) => {
       const x = (idx - (P - 1) / 2) * spacing;
@@ -685,8 +694,13 @@ function init() {
           name: `sound_${info.name.replace('#', 's')}_${m}`
         }
       });
+    }
 
-      const triggerNode = {
+    const BLOCK_ID = P * 2 + 1;
+    for (const m of pitches) {
+      const info = pitchInfo.get(m);
+      const pos = trigPositions.get(m);
+      nodes.push({
         objectID: info.triggerId,
         levelNodeTrigger: {
           shape: 1000,
@@ -694,7 +708,9 @@ function init() {
           scale: { x: 1.1, y: 1.1, z: 1.1 },
           rotation: { x: 0, y: 0, z: 0, w: 1 },
           isShared: false,
-          triggerSources: [],
+          triggerSources: [
+            { triggerSourceBasic: { type: 4, objectID: BLOCK_ID } }
+          ],
           triggerTargets: [
             {
               triggerTargetSound: {
@@ -704,78 +720,95 @@ function init() {
             }
           ]
         }
-      };
-
-      triggerNodeByPitch.set(m, triggerNode);
-      nodes.push(triggerNode);
+      });
     }
 
     const AWAY_Z = 2.5;
     const HIT_Z = 0;
     const HOLD = 0.10;
-    let nextBlockId = P * 2 + 1;
-    const sourceIdsByPitch = new Map();
-    for (const m of pitches) sourceIdsByPitch.set(m, []);
+    const frames = [];
 
-    for (let i = 0; i < events.length; i++) {
-      const ev = events[i];
+    frames.push({
+      time: 0,
+      position: { x: 0, y: 0, z: AWAY_Z },
+      rotation: { x: 0, y: 0, z: 0, w: 1 }
+    });
+
+    for (const ev of events) {
       const pos = trigPositions.get(ev.midi);
-      const blockId = nextBlockId++;
-      sourceIdsByPitch.get(ev.midi).push(blockId);
-
       const t0 = Math.max(0, ev.time - HOLD);
       const t1 = ev.time;
       const t2 = ev.time + HOLD;
 
-      nodes.push({
-        objectID: blockId,
-        animations: [
-          {
-            name: 'midi_note',
-            speed: 1,
-            currentFrameIndex: 0,
-            frames: [
-              { time: t0, position: { x: pos.x, y: pos.y, z: AWAY_Z }, rotation: { x: 0, y: 0, z: 0, w: 1 } },
-              { time: t1, position: { x: pos.x, y: pos.y, z: AWAY_Z }, rotation: { x: 0, y: 0, z: 0, w: 1 } },
-              { time: t1, position: { x: pos.x, y: pos.y, z: HIT_Z },  rotation: { x: 0, y: 0, z: 0, w: 1 } },
-              { time: t2, position: { x: pos.x, y: pos.y, z: HIT_Z },  rotation: { x: 0, y: 0, z: 0, w: 1 } },
-              { time: t2, position: { x: pos.x, y: pos.y, z: AWAY_Z }, rotation: { x: 0, y: 0, z: 0, w: 1 } }
-            ]
-          }
-        ],
-        activeAnimation: 0,
-        levelNodeStatic: {
-          shape: 1000,
-          material: 8,
-          position: { x: pos.x, y: pos.y, z: AWAY_Z },
-          scale: { x: 0.8, y: 0.8, z: 0.8 },
-          rotation: { x: 0, y: 0, z: 0, w: 1 },
-          isNeon: true,
-          isTransparent: false,
-          isGrabbable: false,
-          isGrapplable: false,
-          isPassable: true,
-          isAdditive: true,
-          specularBrightness: 0.2
-        }
+      frames.push({
+        time: t0,
+        position: { x: pos.x, y: pos.y, z: AWAY_Z },
+        rotation: { x: 0, y: 0, z: 0, w: 1 }
       });
 
-      if (i % 250 === 0) await sleep0();
+      frames.push({
+        time: t1,
+        position: { x: pos.x, y: pos.y, z: AWAY_Z },
+        rotation: { x: 0, y: 0, z: 0, w: 1 }
+      });
+
+      frames.push({
+        time: t1,
+        position: { x: pos.x, y: pos.y, z: HIT_Z },
+        rotation: { x: 0, y: 0, z: 0, w: 1 }
+      });
+
+      frames.push({
+        time: t2,
+        position: { x: pos.x, y: pos.y, z: HIT_Z },
+        rotation: { x: 0, y: 0, z: 0, w: 1 }
+      });
+
+      frames.push({
+        time: t2,
+        position: { x: pos.x, y: pos.y, z: AWAY_Z },
+        rotation: { x: 0, y: 0, z: 0, w: 1 }
+      });
     }
 
-    for (const m of pitches) {
-      const trigNode = triggerNodeByPitch.get(m);
-      const ids = sourceIdsByPitch.get(m);
-      trigNode.levelNodeTrigger.triggerSources = ids.map(id => ({
-        triggerSourceBasic: { type: 4, objectID: id }
-      }));
-    }
+    frames.push({
+      time: songDuration + 1,
+      position: { x: 0, y: 0, z: AWAY_Z },
+      rotation: { x: 0, y: 0, z: 0, w: 1 }
+    });
+
+    nodes.push({
+      objectID: BLOCK_ID,
+      animations: [
+        {
+          name: 'midi_sequence',
+          speed: 1,
+          currentFrameIndex: 0,
+          frames: frames
+        }
+      ],
+      activeAnimation: 0,
+      levelNodeStatic: {
+        shape: 1000,
+        material: 8,
+        position: { x: 0, y: 0, z: AWAY_Z },
+        scale: { x: 0.8, y: 0.8, z: 0.8 },
+        rotation: { x: 0, y: 0, z: 0, w: 1 },
+        isNeon: true,
+        isTransparent: false,
+        isGrabbable: false,
+        isGrapplable: false,
+        isPassable: false,
+        isAdditive: false,
+        specularBrightness: 0.2
+      }
+    });
 
     levelJson = {
       formatVersion: 17,
       title: songNameEl.textContent.replace('.roll', ''),
       creators: 'MIDI2GRAB',
-      description: `${P} sounds · ${events.length} keyframes · ${pitches.length} unique pitches`,
+      description: `${P} sounds · 1 animated block · ${events.length} keyframes`,
       tags: ['midi', 'music', 'generated'],
       maxCheckpointCount: 10,
       fogDensity: 0,
@@ -788,21 +821,17 @@ function init() {
         fogDensity: 0
       },
       levelNodes: nodes,
-      _instrumentSummary: Array.from(new Map(rawEvents.map(n => [
-        `${n.instrumentProgram ?? 'x'}|${n.instrumentName}`,
-        { program: n.instrumentProgram, name: n.instrumentName, count: 1 }
-      ])).values()),
       _nodeGuide: {
         soundBlocks: `objectID 1 to ${P}`,
         triggerBlocks: `objectID ${P + 1} to ${P * 2}`,
-        animatedBlocks: `objectID ${P * 2 + 1} to ${nextBlockId - 1}`
+        animatedBlock: `objectID ${BLOCK_ID}`
       }
     };
 
     const jsonStr = JSON.stringify(levelJson, null, 2);
     codeBox.textContent = jsonStr.slice(0, 8000) + (jsonStr.length > 8000 ? '\n\n// ... truncated for preview' : '');
 
-    setStatus(`✓ ${P} sounds + ${P} triggers + ${events.length} animated blocks. Total nodes: ${nodes.length}.`, 'ok');
+    setStatus(`✓ ${P} sounds + ${P} triggers + 1 animated block. Total nodes: ${nodes.length}.`, 'ok');
     setExpStatus(`${(jsonStr.length / 1024).toFixed(1)} KB · ${nodes.length} nodes`, 'ok');
     dlBtn.disabled = false;
     cpBtn.disabled = false;
