@@ -107,7 +107,7 @@ select option{background:var(--s2)}
 
 .cv-wrap{position:relative;background:var(--bg);min-height:260px;overflow:hidden}
 .cv-wrap canvas{display:block;width:100%}
-.cv-empty{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--m);font-family:var(--mono);font-size:12px;gap:8px}
+.cv-empty{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--m);font-family:var(--mono);font-size:12px;gap:8px;z-index:3;pointer-events:none}
 .cv-empty .ico{font-size:32px}
 .cv-leg{display:flex;gap:12px;flex-wrap:wrap;align-items:center;padding:10px 18px;border-top:1px solid var(--b);font-family:var(--mono);font-size:11px;color:var(--m)}
 .leg-item{display:flex;align-items:center;gap:6px}
@@ -142,11 +142,11 @@ select option{background:var(--s2)}
     <h1>MIDI<span class="ac">→</span>GRAB</h1>
     <p>
       Shared note bank per pitch, reused across the whole MIDI.<br>
-      One trigger per pitch, one sound per pitch, and one teleport block total.
+      One trigger per pitch, one sound per pitch, and five reusable voice blocks total.
     </p>
     <div class="tags">
       <span class="tag">✦ pitch reuse</span>
-      <span class="tag t2">✦ one animated block</span>
+      <span class="tag t2">✦ 1 main + 4 chord voices</span>
       <span class="tag t3">✦ fast preview</span>
     </div>
   </div>
@@ -225,6 +225,7 @@ select option{background:var(--s2)}
 
     <div class="cv-wrap" id="cvWrap">
       <canvas id="roll" height="300"></canvas>
+      <canvas id="playOverlay" style="position:absolute;inset:0;pointer-events:none;z-index:2;"></canvas>
       <div class="cv-empty" id="cvEmpty">
         <span class="ico">♬</span>
         <span>Piano roll appears after loading</span>
@@ -281,6 +282,7 @@ function init() {
   const ntBody = document.getElementById('ntBody');
   const leg = document.getElementById('leg');
   const dropZone = document.getElementById('dropZone');
+  const overlay = document.getElementById('playOverlay');
 
   let midi = null;
   let rawEvents = [];
@@ -310,6 +312,7 @@ function init() {
     expStatusEl.textContent = msg;
   }
   function sleep0() { return new Promise(r => setTimeout(r, 0)); }
+
   function compactEvents(list, grid = 0.04) {
     const map = new Map();
     for (const ev of list) {
@@ -326,14 +329,21 @@ function init() {
     return [...map.values()].sort((a, b) => a.time - b.time || a.midi - b.midi || a.dur - b.dur);
   }
 
-  function drawStaticRoll() {
+  function sizeCanvases() {
     const dpr = window.devicePixelRatio || 1;
     const W = cvWrap.clientWidth || 600;
     const H = 300;
-    roll.width = W * dpr;
-    roll.height = H * dpr;
-    roll.style.width = W + 'px';
-    roll.style.height = H + 'px';
+    [roll, overlay].forEach(cv => {
+      cv.width = W * dpr;
+      cv.height = H * dpr;
+      cv.style.width = W + 'px';
+      cv.style.height = H + 'px';
+    });
+    return { dpr, W, H };
+  }
+
+  function drawStaticRoll() {
+    const { dpr, W, H } = sizeCanvases();
     const ctx = roll.getContext('2d');
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, W, H);
@@ -411,15 +421,7 @@ function init() {
   }
 
   function renderPlayhead(playhead) {
-    const dpr = window.devicePixelRatio || 1;
-    const W = cvWrap.clientWidth || 600;
-    const H = 300;
-    const overlay = document.getElementById('playOverlay');
-    if (!overlay) return;
-    overlay.width = W * dpr;
-    overlay.height = H * dpr;
-    overlay.style.width = W + 'px';
-    overlay.style.height = H + 'px';
+    const { dpr, W, H } = sizeCanvases();
     const ctx = overlay.getContext('2d');
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, W, H);
@@ -458,7 +460,6 @@ function init() {
     buildBtn.disabled = false;
     playBtn.disabled = false;
     setStatus(`Loaded "${name}"`, 'ok');
-
     processAndRender();
   }
 
@@ -478,9 +479,7 @@ function init() {
           midi: n.midi,
           time: n.time,
           dur: Math.max(0.04, n.duration),
-          vel: n.velocity ?? 0.8,
-          instrumentName: t.instrument?.name || t.name || 'Unknown',
-          instrumentProgram: t.instrument?.number ?? t.instrument?.program ?? null
+          vel: n.velocity ?? 0.8
         });
       }
       if (raw.length % 400 === 0) await sleep0();
@@ -519,13 +518,13 @@ function init() {
     document.getElementById('sEvts').textContent = events.length;
     document.getElementById('sDur').textContent = songDuration.toFixed(1);
 
-    pillsEl.innerHTML = '';
     const instrumentCount = new Set(raw.map(n => `${n.instrumentProgram ?? 'x'}|${n.instrumentName}`)).size;
+    pillsEl.innerHTML = '';
     const pillData = [
       ['Sound blocks', P],
       ['Trigger blocks', P],
-      ['Animated block', 1],
-      ['Total nodes', P * 2 + 1],
+      ['Voice blocks', 5],
+      ['Total nodes', P * 2 + 5],
       ['Instruments', instrumentCount]
     ];
     for (const [l, v] of pillData) {
@@ -696,10 +695,14 @@ function init() {
       });
     }
 
-    const BLOCK_ID = P * 2 + 1;
+    const VOICE_COUNT = 5;
+    const BLOCK_ID_BASE = P * 2 + 1;
+    const voiceBlockIds = Array.from({ length: VOICE_COUNT }, (_, i) => BLOCK_ID_BASE + i);
+
     for (const m of pitches) {
       const info = pitchInfo.get(m);
       const pos = trigPositions.get(m);
+
       nodes.push({
         objectID: info.triggerId,
         levelNodeTrigger: {
@@ -708,14 +711,14 @@ function init() {
           scale: { x: 1.1, y: 1.1, z: 1.1 },
           rotation: { x: 0, y: 0, z: 0, w: 1 },
           isShared: false,
-          triggerSources: [
-            { triggerSourceBasic: { type: 4, objectID: BLOCK_ID } }
-          ],
+          triggerSources: voiceBlockIds.map(id => ({
+            triggerSourceBasic: { type: 4, objectID: id }
+          })),
           triggerTargets: [
             {
               triggerTargetSound: {
                 objectID: info.soundId,
-                mode: 1
+                mode: 3
               }
             }
           ]
@@ -723,92 +726,121 @@ function init() {
       });
     }
 
-    const AWAY_Z = 2.5;
-    const HIT_Z = 0;
+    const CHORD_WINDOW = 0.03;
     const HOLD = 0.10;
-    const frames = [];
+    const AWAY_Z_BASE = 2.5;
+    const AWAY_Z_STEP = 0.45;
+    const HIT_Z = 0;
+    const framesByVoice = Array.from({ length: VOICE_COUNT }, () => []);
+    const voiceLastTime = Array.from({ length: VOICE_COUNT }, () => -1);
 
-    frames.push({
-      time: 0,
-      position: { x: 0, y: 0, z: AWAY_Z },
-      rotation: { x: 0, y: 0, z: 0, w: 1 }
-    });
+    function chordGroup(notes) {
+      const groups = new Map();
+      for (const ev of notes) {
+        const key = Math.round(ev.time / CHORD_WINDOW);
+        if (!groups.has(key)) groups.set(key, []);
+        groups.get(key).push(ev);
+      }
+      return [...groups.entries()]
+        .sort((a, b) => Number(a[0]) - Number(b[0]))
+        .map(([, group]) => group.sort((a, b) => a.midi - b.midi));
+    }
 
-    for (const ev of events) {
-      const pos = trigPositions.get(ev.midi);
-      const t0 = Math.max(0, ev.time - HOLD);
-      const t1 = ev.time;
-      const t2 = ev.time + HOLD;
+    const chordGroups = chordGroup(events);
 
-      frames.push({
-        time: t0,
-        position: { x: pos.x, y: pos.y, z: AWAY_Z },
-        rotation: { x: 0, y: 0, z: 0, w: 1 }
-      });
+    // One main voice, four chord voices
+    for (const group of chordGroups) {
+      group.forEach((ev, idx) => {
+        const voiceIdx = Math.min(idx, VOICE_COUNT - 1);
+        const pos = trigPositions.get(ev.midi);
+        const awayZ = AWAY_Z_BASE + voiceIdx * AWAY_Z_STEP;
+        const t0 = Math.max(0, ev.time - HOLD);
+        const t1 = ev.time;
+        const t2 = ev.time + HOLD;
 
-      frames.push({
-        time: t1,
-        position: { x: pos.x, y: pos.y, z: AWAY_Z },
-        rotation: { x: 0, y: 0, z: 0, w: 1 }
-      });
+        if (voiceLastTime[voiceIdx] < 0) {
+          framesByVoice[voiceIdx].push({
+            time: 0,
+            position: { x: 0, y: 0, z: awayZ },
+            rotation: { x: 0, y: 0, z: 0, w: 1 }
+          });
+        }
 
-      frames.push({
-        time: t1,
-        position: { x: pos.x, y: pos.y, z: HIT_Z },
-        rotation: { x: 0, y: 0, z: 0, w: 1 }
-      });
+        framesByVoice[voiceIdx].push({
+          time: t0,
+          position: { x: pos.x, y: pos.y, z: awayZ },
+          rotation: { x: 0, y: 0, z: 0, w: 1 }
+        });
 
-      frames.push({
-        time: t2,
-        position: { x: pos.x, y: pos.y, z: HIT_Z },
-        rotation: { x: 0, y: 0, z: 0, w: 1 }
-      });
+        framesByVoice[voiceIdx].push({
+          time: t1,
+          position: { x: pos.x, y: pos.y, z: awayZ },
+          rotation: { x: 0, y: 0, z: 0, w: 1 }
+        });
 
-      frames.push({
-        time: t2,
-        position: { x: pos.x, y: pos.y, z: AWAY_Z },
-        rotation: { x: 0, y: 0, z: 0, w: 1 }
+        framesByVoice[voiceIdx].push({
+          time: t1,
+          position: { x: pos.x, y: pos.y, z: HIT_Z },
+          rotation: { x: 0, y: 0, z: 0, w: 1 }
+        });
+
+        framesByVoice[voiceIdx].push({
+          time: t2,
+          position: { x: pos.x, y: pos.y, z: HIT_Z },
+          rotation: { x: 0, y: 0, z: 0, w: 1 }
+        });
+
+        framesByVoice[voiceIdx].push({
+          time: t2,
+          position: { x: pos.x, y: pos.y, z: awayZ },
+          rotation: { x: 0, y: 0, z: 0, w: 1 }
+        });
+
+        voiceLastTime[voiceIdx] = t2;
       });
     }
 
-    frames.push({
-      time: songDuration + 1,
-      position: { x: 0, y: 0, z: AWAY_Z },
-      rotation: { x: 0, y: 0, z: 0, w: 1 }
-    });
+    for (let v = 0; v < VOICE_COUNT; v++) {
+      const awayZ = AWAY_Z_BASE + v * AWAY_Z_STEP;
+      const frames = framesByVoice[v];
 
-    nodes.push({
-      objectID: BLOCK_ID,
-      animations: [
-        {
-          name: 'midi_sequence',
+      frames.push({
+        time: songDuration + 1,
+        position: { x: 0, y: 0, z: awayZ },
+        rotation: { x: 0, y: 0, z: 0, w: 1 }
+      });
+
+      nodes.push({
+        objectID: voiceBlockIds[v],
+        animations: [{
+          name: `voice_${v}`,
           speed: 1,
           currentFrameIndex: 0,
           frames: frames
+        }],
+        activeAnimation: 0,
+        levelNodeStatic: {
+          shape: 1000,
+          material: 8,
+          position: { x: 0, y: 0, z: awayZ },
+          scale: { x: 0.8, y: 0.8, z: 0.8 },
+          rotation: { x: 0, y: 0, z: 0, w: 1 },
+          isNeon: true,
+          isTransparent: false,
+          isGrabbable: false,
+          isGrapplable: false,
+          isPassable: false,
+          isAdditive: false,
+          specularBrightness: 0.2
         }
-      ],
-      activeAnimation: 0,
-      levelNodeStatic: {
-        shape: 1000,
-        material: 8,
-        position: { x: 0, y: 0, z: AWAY_Z },
-        scale: { x: 0.8, y: 0.8, z: 0.8 },
-        rotation: { x: 0, y: 0, z: 0, w: 1 },
-        isNeon: true,
-        isTransparent: false,
-        isGrabbable: false,
-        isGrapplable: false,
-        isPassable: false,
-        isAdditive: false,
-        specularBrightness: 0.2
-      }
-    });
+      });
+    }
 
     levelJson = {
       formatVersion: 17,
       title: songNameEl.textContent.replace('.roll', ''),
       creators: 'MIDI2GRAB',
-      description: `${P} sounds · 1 animated block · ${events.length} keyframes`,
+      description: `${P} sounds · 5 voice blocks · ${events.length} keyframes`,
       tags: ['midi', 'music', 'generated'],
       maxCheckpointCount: 10,
       fogDensity: 0,
@@ -824,14 +856,14 @@ function init() {
       _nodeGuide: {
         soundBlocks: `objectID 1 to ${P}`,
         triggerBlocks: `objectID ${P + 1} to ${P * 2}`,
-        animatedBlock: `objectID ${BLOCK_ID}`
+        voiceBlocks: `objectID ${BLOCK_ID_BASE} to ${BLOCK_ID_BASE + VOICE_COUNT - 1}`
       }
     };
 
     const jsonStr = JSON.stringify(levelJson, null, 2);
     codeBox.textContent = jsonStr.slice(0, 8000) + (jsonStr.length > 8000 ? '\n\n// ... truncated for preview' : '');
 
-    setStatus(`✓ ${P} sounds + ${P} triggers + 1 animated block. Total nodes: ${nodes.length}.`, 'ok');
+    setStatus(`✓ ${P} sounds + ${P} triggers + 5 animated blocks. Total nodes: ${nodes.length}.`, 'ok');
     setExpStatus(`${(jsonStr.length / 1024).toFixed(1)} KB · ${nodes.length} nodes`, 'ok');
     dlBtn.disabled = false;
     cpBtn.disabled = false;
@@ -892,14 +924,6 @@ function init() {
     dropZone.classList.remove('ov');
     handleFile(e.dataTransfer.files[0]);
   });
-
-  const overlay = document.createElement('canvas');
-  overlay.id = 'playOverlay';
-  overlay.style.position = 'absolute';
-  overlay.style.inset = '0';
-  overlay.style.pointerEvents = 'none';
-  overlay.style.zIndex = '2';
-  cvWrap.appendChild(overlay);
 
   let resizeT;
   window.addEventListener('resize', () => {
