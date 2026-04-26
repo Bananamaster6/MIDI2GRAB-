@@ -496,7 +496,7 @@ input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;bac
           <div class="drop" id="baseLevelDrop" style="padding:16px">
             <input type="file" id="baseLevelInput" accept=".level,.json"/>
             <div class="drop-ico" style="font-size:20px">⊞</div>
-            <div class="drop-txt" id="baseLevelTxt"><strong>Drop .level or .json here</strong><br>.level = real protobuf binary · .json = grab-tools editor format</div>
+            <div class="drop-txt" id="baseLevelTxt"><strong>Drop .level or .json here</strong><br>.level from grab-tools.live or .json — optional</div>
           </div>
           <div style="display:flex;justify-content:flex-end;margin-top:-4px">
             <button class="btn btn-d" id="clearBaseLevelBtn" style="padding:5px 11px;font-size:11px;display:none">✕ Clear base level</button>
@@ -547,8 +547,8 @@ input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;bac
             <button class="comp-btn" id="fmtLevel" style="flex:1;text-align:center;padding:10px">⬡ .level (protobuf)</button>
           </div>
           <div style="font-family:var(--mono);font-size:10px;line-height:1.6;margin-top:6px;padding:8px 10px;border-radius:8px;border:1px solid var(--b)" id="fmtHint">
-            <span style="color:var(--a)">ⓘ</span> <span style="color:var(--m)"><b style="color:var(--t)">.json</b> — human-readable JSON, import via grab-tools.live JSON editor.<br>
-            <b style="color:var(--t)">.level</b> — real GRAB binary protobuf format. Drop directly into <code>Documents/GRAB/levels/user</code> (PC) or <code>Android/data/com.slindev.grab/levels/user</code> (Quest). Uses the full GRAB proto3 schema encoded with protobuf.js.</span>
+            <span style="color:var(--a)">ⓘ</span> <span style="color:var(--m)"><b style="color:var(--t)">.json</b> — readable JSON, open in any text editor or grab-tools.live JSON editor.<br>
+            <b style="color:var(--t)">.level</b> — same JSON content, GRAB's preferred extension. Drop directly into <code>Documents/GRAB/levels/user</code> (PC) or <code>Android/data/com.slindev.grab/levels/user</code> (Quest).</span>
           </div>
         </div>
 
@@ -931,7 +931,7 @@ document.querySelectorAll('.tab-btn').forEach(btn=>{
   trackSel.addEventListener('change',()=>{if(midi) processAndRender();});
   buildBtn.addEventListener('click',()=>buildLevel().catch(e=>ss(statusEl,e.message,'err')));
   playBtn.addEventListener('click',startPlay);stopBtn.addEventListener('click',stopPlay);
-  dlBtn.addEventListener('click',()=>{if(!levelJson) return;const s=JSON.stringify(levelJson,null,2);const a=Object.assign(document.createElement('a'),{href:URL.createObjectURL(new Blob([s],{type:'application/json'})),download:(levelJson.title||'midi_level').replace(/\s+/g,'_')+'.json'});a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000);ss(expStatusEl,'Downloaded!','ok');});
+  dlBtn.addEventListener('click',()=>{if(!levelJson) return;const s=JSON.stringify(levelJson,null,2);const safeName=(levelJson.title||'midi_level').trim().replace(/[^\w\s\-]/g,'').replace(/\s+/g,'_')||'midi_level';const a=Object.assign(document.createElement('a'),{href:URL.createObjectURL(new Blob([s],{type:'application/json'})),download:safeName+'.json'});a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000);ss(expStatusEl,'Downloaded!','ok');});
   cpBtn.addEventListener('click',async()=>{if(!levelJson) return;try{await navigator.clipboard.writeText(JSON.stringify(levelJson,null,2));ss(expStatusEl,'Copied!','ok');}catch{ss(expStatusEl,'Copy failed','err');}});
   dropZone.addEventListener('dragover',e=>{e.preventDefault();dropZone.classList.add('ov');});
   dropZone.addEventListener('dragleave',()=>dropZone.classList.remove('ov'));
@@ -1284,7 +1284,7 @@ function initComposer(){
     fmtLevelBtn.classList.toggle('active',fmt==='level');
     fmtJsonBtn.textContent=fmt==='json'?'✦ .json':'⬡ .json';
     fmtLevelBtn.textContent=fmt==='level'?'✦ .level':'⬡ .level';
-    if(cmpLevelJson) updateOutputTitle();
+    if(cmpOutputTitle) updateOutputTitle();
   }
   function updateOutputTitle(){
     const ext=outputFmt==='level'?'.level':'.json';
@@ -1294,50 +1294,82 @@ function initComposer(){
   fmtLevelBtn.addEventListener('click',()=>setFmt('level'));
   setFmt('json');
 
-  // ── Base level (.level / .json) loading ────────────
+  // ── Base level loading (.level or .json) ───────────
   function loadBaseLevel(file){
-    if(!/\.(level|json)$/i.test(file.name)){ss('Base level must be .level or .json','err');return;}
+    if(!/\.(level|json)$/i.test(file.name)){
+      ss('Base level must be a .level or .json file','err');return;
+    }
+    ss('Reading level file…','load');
     const r=new FileReader();
     r.onload=e=>{
-      let parsed;
-      try{parsed=JSON.parse(e.target.result);}
-      catch(err){ss('Could not parse level file: '+err.message,'err');return;}
-      baseLevelData=parsed;
-      baseLevelName=file.name;
+      const bytes=new Uint8Array(e.target.result);
 
-      // Show info
-      baseLevelInfoPanel.style.display='block';
-      document.getElementById('baseLevelInfoTitle').textContent=file.name;
-      document.getElementById('blNodes').textContent=Array.isArray(parsed.levelNodes)?parsed.levelNodes.length:'?';
-      document.getElementById('blTitle').textContent=(parsed.title||'Untitled').slice(0,12);
-      document.getElementById('blFmt').textContent=parsed.formatVersion??'?';
-      document.getElementById('blStatus').textContent=`Base level loaded: "${parsed.title||file.name}" — new music nodes will be appended.`;
+      // Check if the file starts with '{' (0x7B) — indicating JSON text.
+      // Skip any leading UTF-8 BOM (EF BB BF) if present.
+      let start=0;
+      if(bytes[0]===0xEF&&bytes[1]===0xBB&&bytes[2]===0xBF) start=3;
+      const firstChar=bytes[start];
 
-      // Update drop zone
-      baseLevelDrop.style.borderColor='rgba(77,255,200,.5)';
-      baseLevelDrop.style.background='rgba(77,255,200,.04)';
-      baseLevelTxt.innerHTML=`<strong style="color:var(--a)">${file.name}</strong><br>${Array.isArray(parsed.levelNodes)?parsed.levelNodes.length:0} existing nodes`;
-      clearBaseBtn.style.display='inline-flex';
-      ss(`Base level "${file.name}" loaded. MIDI will be merged in.`,'ok');
+      if(firstChar===0x7B){ // '{'
+        // Looks like JSON — decode as text and parse
+        const text=new TextDecoder().decode(bytes);
+        let parsed=null;
+        try{ parsed=JSON.parse(text); }
+        catch(err){
+          ss('Could not parse level file: '+err.message,'err');
+          return;
+        }
+        baseLevelData=parsed;
+        baseLevelName=file.name;
+        const nodeCount=Array.isArray(parsed.levelNodes)?parsed.levelNodes.length:0;
+        showBaseLevelInfo(file.name, parsed.title||'Untitled', nodeCount, parsed.formatVersion??'?',
+          `Loaded "${parsed.title||file.name}" — ${nodeCount} existing nodes will be preserved.`);
+        ss(`✓ Loaded "${file.name}" (${nodeCount} nodes)`,'ok');
+      } else {
+        // Binary file — native GRAB protobuf .level from the game's own editor
+        ss('This .level file was saved by the GRAB game directly and is in binary format. To use it here, open grab-tools.live, go to Tools → "Level to JSON", convert it, then import the .json here.','warn');
+        baseLevelDrop.style.borderColor='rgba(255,200,77,.5)';
+        baseLevelDrop.style.background='rgba(255,200,77,.03)';
+        baseLevelTxt.innerHTML=`<strong style="color:var(--warn)">${file.name}</strong><br>Binary format — convert at grab-tools.live first`;
+        clearBaseBtn.style.display='inline-flex';
+      }
     };
     r.onerror=()=>ss('Could not read file','err');
-    r.readAsText(file);
+    r.readAsArrayBuffer(file);
+  }
+
+  function showBaseLevelInfo(filename,title,nodes,fmt,statusMsg){
+    baseLevelInfoPanel.style.display='block';
+    document.getElementById('baseLevelInfoTitle').textContent=filename;
+    document.getElementById('blNodes').textContent=nodes;
+    document.getElementById('blTitle').textContent=String(title).slice(0,12);
+    document.getElementById('blFmt').textContent=fmt;
+    document.getElementById('blStatus').textContent=statusMsg;
+    baseLevelDrop.style.borderColor='rgba(77,255,200,.5)';
+    baseLevelDrop.style.background='rgba(77,255,200,.04)';
+    baseLevelTxt.innerHTML=`<strong style="color:var(--a)">${filename}</strong><br>${nodes} nodes · JSON level`;
+    clearBaseBtn.style.display='inline-flex';
   }
 
   function clearBaseLevel(){
     baseLevelData=null;baseLevelName='';
     baseLevelInfoPanel.style.display='none';
-    baseLevelDrop.style.borderColor='';baseLevelDrop.style.background='';
-    baseLevelTxt.innerHTML='<strong>Drop .level or .json here</strong><br>or click — leave empty to create new';
+    baseLevelDrop.style.borderColor='';
+    baseLevelDrop.style.background='';
+    baseLevelTxt.innerHTML='<strong>Drop .level or .json here</strong><br>.level from grab-tools.live or .json — optional';
     clearBaseBtn.style.display='none';
     baseLevelInput.value='';
-    ss('Base level cleared. Will create a new level.','ok');
+    ss('Base level cleared.','ok');
   }
 
   baseLevelInput.addEventListener('change',e=>{if(e.target.files[0]) loadBaseLevel(e.target.files[0]);baseLevelInput.value='';});
   baseLevelDrop.addEventListener('dragover',e=>{e.preventDefault();baseLevelDrop.classList.add('ov');});
   baseLevelDrop.addEventListener('dragleave',()=>baseLevelDrop.classList.remove('ov'));
-  baseLevelDrop.addEventListener('drop',e=>{e.preventDefault();baseLevelDrop.classList.remove('ov');if(e.dataTransfer.files[0]) loadBaseLevel(e.dataTransfer.files[0]);});
+  baseLevelDrop.addEventListener('drop',e=>{
+    e.preventDefault();baseLevelDrop.classList.remove('ov');
+    const f=e.dataTransfer.files[0];
+    if(f) loadBaseLevel(f);
+  });
   clearBaseBtn.addEventListener('click',clearBaseLevel);
 
   // ── MIDI slots ──────────────────────────────────────
@@ -1566,7 +1598,6 @@ function initComposer(){
       title: baseLevelData?(baseLevelData.title||'compiled_level'):'compiled_level'
     });
 
-    // Merge into base level if one is loaded, otherwise use fresh
     cmpLevelJson = baseLevelData ? mergeIntoBaseLevel(baseLevelData, musicJson) : musicJson;
 
     const s=JSON.stringify(cmpLevelJson,null,2);
@@ -1581,19 +1612,23 @@ function initComposer(){
     ss(`✓ ${baseLevelData?'Merged into base level':'Compiled'}: ${midiSlots.length} layers → ${evts.length} notes · ${cmpLevelJson.levelNodes.length} nodes`,'ok');
   });
 
-  // ── Download & Copy ─────────────────────────────────
+  // ── Download ─────────────────────────────────────────
+  // Both .json and .level export the same JSON content.
+  // .level is the extension GRAB and grab-tools.live use natively for JSON-format levels.
+  // Drop either into Documents/GRAB/levels/user (PC) or the Quest equivalent.
   document.getElementById('cmpDlBtn').addEventListener('click',()=>{
     if(!cmpLevelJson) return;
     const s=JSON.stringify(cmpLevelJson,null,2);
     const ext=outputFmt==='level'?'.level':'.json';
-    const baseName=(cmpLevelJson.title||'compiled_level').replace(/\s+/g,'_').replace(/\.(level|json)$/i,'');
-    const mime=outputFmt==='level'?'application/octet-stream':'application/json';
+    const rawTitle=cmpLevelJson.title||'compiled_level';
+    const baseName=(rawTitle.trim().replace(/[^\w\s\-]/g,'').replace(/\s+/g,'_')||'compiled_level');
     const a=Object.assign(document.createElement('a'),{
-      href:URL.createObjectURL(new Blob([s],{type:mime})),
+      href:URL.createObjectURL(new Blob([s],{type:'application/json'})),
       download:baseName+ext
     });
-    a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000);
-    document.getElementById('cmpExpStatus').textContent=`Downloaded as ${baseName+ext}`;
+    a.click();
+    setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+    document.getElementById('cmpExpStatus').textContent=`Downloaded ${baseName+ext}`;
   });
 
   document.getElementById('cmpCpBtn').addEventListener('click',async()=>{
@@ -1612,8 +1647,8 @@ function initComposer(){
 
 // ── PASSWORD GATE LOGIC ────────────────────────────────────────────────────
 (function(){
-  
-  const HASH = 'd7fd49fefb227c608708ffb6908768ebdbeea0fe3a1de46c495152f9f649d82c';
+  const HASH    = 'd7fd49fefb227c608708ffb6908768ebdbeea0fe3a1de46c495152f9f649d82c';
+  const STORE_KEY = 'mg_auth';
 
   const gate  = document.getElementById('gate');
   const input = document.getElementById('gateInput');
@@ -1625,6 +1660,31 @@ function initComposer(){
     const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
     return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
   }
+
+  // If the stored token matches the hash, skip the gate instantly
+  function isAlreadyUnlocked() {
+    try { return localStorage.getItem(STORE_KEY) === HASH; } catch { return false; }
+  }
+
+  function persistUnlock() {
+    try { localStorage.setItem(STORE_KEY, HASH); } catch {}
+  }
+
+  function unlock(instant) {
+    persistUnlock();
+    if (instant) {
+      gate.style.display = 'none';
+      return;
+    }
+    hint.textContent = '✓ Access granted';
+    hint.className = 'gate-hint ok';
+    input.className = 'gate-input right';
+    gate.classList.add('unlocking');
+    setTimeout(() => { gate.style.display = 'none'; }, 450);
+  }
+
+  // Skip gate immediately if already authenticated
+  if (isAlreadyUnlocked()) { unlock(true); return; }
 
   eye.addEventListener('click', () => {
     const show = input.type === 'password';
@@ -1642,11 +1702,7 @@ function initComposer(){
     }
     const h = await sha256hex(val);
     if (h === HASH) {
-      hint.textContent = '✓ Access granted';
-      hint.className = 'gate-hint ok';
-      input.className = 'gate-input right';
-      gate.classList.add('unlocking');
-      setTimeout(() => { gate.style.display = 'none'; }, 450);
+      unlock(false);
     } else {
       hint.textContent = 'Incorrect password. Try again.';
       hint.className = 'gate-hint err';
