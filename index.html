@@ -280,6 +280,40 @@ input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;bac
 </div>
 <div class="orb orb1"></div>
 <div class="orb orb2"></div>
+
+<!-- ── TOP NAV ── -->
+<div style="position:relative;z-index:2;background:var(--s1);border-bottom:1px solid var(--b);padding:10px 24px;display:flex;align-items:center;gap:14px">
+  <a href="https://bm6-hub.vercel.app" style="display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:11px;color:var(--m);text-decoration:none;padding:6px 12px;border:1px solid var(--b);border-radius:8px;transition:all .15s" onmouseover="this.style.color='var(--a)';this.style.borderColor='rgba(77,255,200,.3)'" onmouseout="this.style.color='var(--m)';this.style.borderColor='var(--b)'">← Tool Hub</a>
+  <span style="font-family:var(--mono);font-size:11px;color:var(--m)">/ MIDI → Grab</span>
+  <button id="tutorialToggle" style="margin-left:auto;display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:11px;color:var(--a2);background:rgba(139,111,255,.08);border:1px solid rgba(139,111,255,.3);border-radius:8px;padding:6px 14px;cursor:pointer;transition:all .15s">📖 Tutorial</button>
+</div>
+
+<!-- ── TUTORIAL PANEL ── -->
+<div id="tutorialPanel" style="display:none;position:relative;z-index:2;background:rgba(139,111,255,.06);border-bottom:1px solid rgba(139,111,255,.2);padding:20px 28px">
+  <div style="max-width:1100px;margin:0 auto;display:flex;flex-direction:column;gap:12px">
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <span style="font-family:var(--mono);font-size:10px;color:#a899ff;letter-spacing:.1em;text-transform:uppercase">How to export a level</span>
+      <button id="tutorialClose" style="background:none;border:none;color:var(--m);cursor:pointer;font-size:18px;line-height:1;padding:2px 6px">✕</button>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div style="display:flex;gap:16px;flex-wrap:wrap">
+        <div style="flex:1;min-width:260px;background:var(--s1);border:1px solid rgba(139,111,255,.2);border-radius:12px;padding:14px 16px">
+          <div style="font-family:var(--mono);font-size:10px;color:#a899ff;letter-spacing:.08em;margin-bottom:8px">STEP 1 — BUILD</div>
+          <p style="font-family:var(--mono);font-size:11px;color:var(--t);line-height:1.75">Import your MIDI file, then press <b style="color:var(--a)">⚡ Build Level</b>. Once built, press <b style="color:var(--a)">⬇ Download</b> to save the <code style="color:var(--a3)">.json</code> file to your device.</p>
+        </div>
+        <div style="flex:1;min-width:260px;background:var(--s1);border:1px solid rgba(139,111,255,.2);border-radius:12px;padding:14px 16px">
+          <div style="font-family:var(--mono);font-size:10px;color:#a899ff;letter-spacing:.08em;margin-bottom:8px">STEP 2 — CONVERT TO .LEVEL</div>
+          <p style="font-family:var(--mono);font-size:11px;color:var(--t);line-height:1.75">Go to <a href="https://grabvr.tools" target="_blank" style="color:var(--a);text-decoration:none">grabvr.tools</a>. Press <b style="color:var(--a3)">File → Insert</b>, then click <b style="color:var(--a3)">.JSON File</b> and select your downloaded file. Afterwards press <b style="color:var(--a3)">File → Export → Export the .level</b>.</p>
+        </div>
+        <div style="flex:1;min-width:260px;background:var(--s1);border:1px solid rgba(139,111,255,.2);border-radius:12px;padding:14px 16px">
+          <div style="font-family:var(--mono);font-size:10px;color:#a899ff;letter-spacing:.08em;margin-bottom:8px">STEP 3 — ADD TO GRAB</div>
+          <p style="font-family:var(--mono);font-size:11px;color:var(--t);line-height:1.75">Paste the <code style="color:var(--a3)">.level</code> file into your Grab levels folder using <b style="color:var(--t)">CX File Explorer</b>, <b style="color:var(--t)">ZArchiver</b>, or any file manager. The level will appear in your Grab level list.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="page">
 
 <!-- ── HEADER ── -->
@@ -1716,6 +1750,25 @@ function initComposer(){
   btn.addEventListener('click', tryUnlock);
   input.addEventListener('keydown', e => { if (e.key === 'Enter') tryUnlock(); });
   input.focus();
+})();
+
+// ── TUTORIAL TOGGLE ───────────────────────────────────────────────────────
+(function(){
+  const btn   = document.getElementById('tutorialToggle');
+  const panel = document.getElementById('tutorialPanel');
+  const close = document.getElementById('tutorialClose');
+  if(!btn||!panel) return;
+  btn.addEventListener('click',()=>{
+    const open = panel.style.display==='none';
+    panel.style.display = open ? 'block' : 'none';
+    btn.style.background = open ? 'rgba(139,111,255,.18)' : 'rgba(139,111,255,.08)';
+    btn.textContent = open ? '📖 Tutorial ▲' : '📖 Tutorial';
+  });
+  close.addEventListener('click',()=>{
+    panel.style.display='none';
+    btn.style.background='rgba(139,111,255,.08)';
+    btn.textContent='📖 Tutorial';
+  });
 })();
 </script>
 </body>
