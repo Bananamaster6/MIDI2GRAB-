@@ -283,7 +283,7 @@ input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;bac
 
 <!-- ── TOP NAV ── -->
 <div style="position:relative;z-index:2;background:var(--s1);border-bottom:1px solid var(--b);padding:10px 24px;display:flex;align-items:center;gap:14px">
-  <a href="https://bm6-hub.vercel.app" style="display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:11px;color:var(--m);text-decoration:none;padding:6px 12px;border:1px solid var(--b);border-radius:8px;transition:all .15s" onmouseover="this.style.color='var(--a)';this.style.borderColor='rgba(77,255,200,.3)'" onmouseout="this.style.color='var(--m)';this.style.borderColor='var(--b)'">← Tool Hub</a>
+  <a href="https://bananamasters-tool-hub.vercel.app" style="display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:11px;color:var(--m);text-decoration:none;padding:6px 12px;border:1px solid var(--b);border-radius:8px;transition:all .15s" onmouseover="this.style.color='var(--a)';this.style.borderColor='rgba(77,255,200,.3)'" onmouseout="this.style.color='var(--m)';this.style.borderColor='var(--b)'">← Tool Hub</a>
   <span style="font-family:var(--mono);font-size:11px;color:var(--m)">/ MIDI → Grab</span>
   <button id="tutorialToggle" style="margin-left:auto;display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:11px;color:var(--a2);background:rgba(139,111,255,.08);border:1px solid rgba(139,111,255,.3);border-radius:8px;padding:6px 14px;cursor:pointer;transition:all .15s">📖 Tutorial</button>
 </div>
@@ -743,7 +743,7 @@ function buildLevelJSON({events, voiceCount, spacing, vol, atk, wave, title}){
   }
   return {formatVersion:17,title:title||'midi_level',creators:'MIDI2GRAB',
     description:`${P} sounds · ${voiceCount} voice blocks · ${events.length} notes`,
-    tags:['midi','music','generated'],maxCheckpointCount:10,fogDensity:0,
+    tags:['Innovative'],maxCheckpointCount:10,fogDensity:0,
     ambienceSettings:{skyZenithColor:{r:.04,g:.05,b:.10,a:1},skyHorizonColor:{r:.08,g:.10,b:.16,a:1},
       sunAltitude:30,sunAzimuth:270,sunSize:.5,fogDensity:0},
     levelNodes:nodes,
