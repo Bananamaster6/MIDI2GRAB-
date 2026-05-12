@@ -367,7 +367,7 @@ input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;bac
               <option value="1">1. Square</option>
               <option value="3" selected>2. Sawtooth</option>
               <option value="0">3. Sine</option>
-              <option value="4">4. Noise</option>
+              <option value="2">4. Triangle</option>
             </select></div>
         </div>
         <div class="r3">
@@ -553,7 +553,7 @@ input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;bac
               <option value="1">1. Square</option>
               <option value="3" selected>2. Sawtooth</option>
               <option value="0">3. Sine</option>
-              <option value="4">4. Noise</option>
+              <option value="2">4. Triangle</option>
             </select></div>
           <div class="field"><label>Spacing (m)</label>
             <input type="number" id="cmpSpacing" value="3" min="1" max="20" step="0.5"/></div>
@@ -665,6 +665,9 @@ function compactEvents(list, grid=0.04){
 }
 
 function buildLevelJSON({events, voiceCount, spacing, vol, atk, wave, title}){
+  // Clamp wave to valid GRAB values: 0=sine, 1=square, 2=triangle, 3=sawtooth
+  const waveType = Math.min(3, Math.max(0, Math.round(wave)));
+
   const pitchSet=new Set(events.map(e=>e.midi));
   const pitches=[...pitchSet].sort((a,b)=>a-b);
   const P=pitches.length;
@@ -673,10 +676,45 @@ function buildLevelJSON({events, voiceCount, spacing, vol, atk, wave, title}){
     pitchInfo.set(m,{soundId:idx+1,triggerId:P+idx+1,freq:midiFreq(m),name:noteName(m)});
   });
   const songDuration=events.length?Math.max(...events.map(e=>e.time+e.dur)):0;
-  const BLOCK_ID_BASE=P*2+1;
+
+  // Detect pitches that play simultaneously (same MIDI pitch in same chord window)
+  // and create secondary sound+trigger pairs for them
+  const CHORD_WINDOW=0.03;
+  const groups=new Map();
+  for(const ev of events){
+    const key=Math.round(ev.time/CHORD_WINDOW);
+    if(!groups.has(key)) groups.set(key,[]);
+    groups.get(key).push(ev);
+  }
+  // Find pitches that appear more than once in any chord group
+  const needsDouble=new Set();
+  for(const [,grp] of groups){
+    const seen=new Set();
+    for(const ev of grp){
+      if(seen.has(ev.midi)) needsDouble.add(ev.midi);
+      seen.add(ev.midi);
+    }
+  }
+
+  // Assign IDs: primary sounds 1..P, primary triggers P+1..2P
+  // secondary sounds 2P+1..2P+D, secondary triggers 2P+D+1..2P+2D
+  // voice blocks after all of that
+  const doubledPitches=[...needsDouble].sort((a,b)=>a-b);
+  const D=doubledPitches.length;
+  const secSoundBase=P*2+1;
+  const secTrigBase=secSoundBase+D;
+  const BLOCK_ID_BASE=secTrigBase+D;
   const voiceBlockIds=Array.from({length:voiceCount},(_,i)=>BLOCK_ID_BASE+i);
+
+  // Map each doubled pitch → secondary sound/trigger IDs
+  const secInfo=new Map();
+  doubledPitches.forEach((m,i)=>{
+    secInfo.set(m,{soundId:secSoundBase+i,triggerId:secTrigBase+i});
+  });
+
   const nodes=[];
 
+  // ── Primary sound blocks ──────────────────────────────────────────────────
   for(const m of pitches){
     const info=pitchInfo.get(m);
     const idx=pitches.indexOf(m);
@@ -684,7 +722,7 @@ function buildLevelJSON({events, voiceCount, spacing, vol, atk, wave, title}){
     nodes.push({objectID:info.soundId,levelNodeSound:{
       position:{x,y:2,z:0},rotation:{x:0,y:0,z:0,w:1},scale:{x:1,y:1,z:1},
       startActive:false,
-      parameters:{volume:vol,waveType:wave,envelopeAttack:atk,envelopeSustain:.10,envelopeRelease:.12,envelopePunch:0,
+      parameters:{volume:vol,waveType,envelopeAttack:atk,envelopeSustain:.10,envelopeRelease:.12,envelopePunch:0,
         frequencyBase:Math.round(info.freq),frequencyLimit:30,frequencyRamp:0,frequencyDeltaRamp:0,
         vibratoStrength:0,vibratoSpeed:0,pitchJumpMod:0,pitchJumpSpeed:0,dutyCycle:.5,dutyCycleRamp:0,
         repeatSpeed:0,flangerFrequency:0,flangerDepth:0,lowPassFilterFrequency:10000,highPassFilterFrequency:0,
@@ -692,6 +730,27 @@ function buildLevelJSON({events, voiceCount, spacing, vol, atk, wave, title}){
       volume:vol,maxRangeFactor:1000,repeat:false,name:`sound_${info.name.replace('#','s')}_${m}`
     }});
   }
+
+  // ── Secondary sound blocks (for doubled pitches) ──────────────────────────
+  for(const m of doubledPitches){
+    const info=pitchInfo.get(m);
+    const sec=secInfo.get(m);
+    const idx=pitches.indexOf(m);
+    const x=(idx-(P-1)/2)*spacing;
+    // Offset slightly so it doesn't overlap the primary
+    nodes.push({objectID:sec.soundId,levelNodeSound:{
+      position:{x,y:3.2,z:0},rotation:{x:0,y:0,z:0,w:1},scale:{x:1,y:1,z:1},
+      startActive:false,
+      parameters:{volume:vol,waveType,envelopeAttack:atk,envelopeSustain:.10,envelopeRelease:.12,envelopePunch:0,
+        frequencyBase:Math.round(info.freq),frequencyLimit:30,frequencyRamp:0,frequencyDeltaRamp:0,
+        vibratoStrength:0,vibratoSpeed:0,pitchJumpMod:0,pitchJumpSpeed:0,dutyCycle:.5,dutyCycleRamp:0,
+        repeatSpeed:0,flangerFrequency:0,flangerDepth:0,lowPassFilterFrequency:10000,highPassFilterFrequency:0,
+        reverbDelay:0,reverbDecayFactor:0},
+      volume:vol,maxRangeFactor:1000,repeat:false,name:`sound2_${info.name.replace('#','s')}_${m}`
+    }});
+  }
+
+  // ── Primary trigger blocks ────────────────────────────────────────────────
   for(const m of pitches){
     const info=pitchInfo.get(m);
     const idx=pitches.indexOf(m);
@@ -703,19 +762,46 @@ function buildLevelJSON({events, voiceCount, spacing, vol, atk, wave, title}){
     }});
   }
 
-  const CHORD_WINDOW=0.03,HOLD=0.10,AWAY_Z_BASE=2.5,AWAY_Z_STEP=0.25,HIT_Z=0;
-  const framesByVoice=Array.from({length:voiceCount},()=>[]);
-  const groups=new Map();
-  for(const ev of events){
-    const key=Math.round(ev.time/CHORD_WINDOW);
-    if(!groups.has(key)) groups.set(key,[]);
-    groups.get(key).push(ev);
+  // ── Secondary trigger blocks (for doubled pitches — hit by different voice blocks) ──
+  // Use the LAST voiceCount voices so they never collide with primary trigger assignments
+  // Actually assign alternating voices: even voices → primary, odd voices → secondary
+  const secVoiceIds = voiceBlockIds.filter((_,i)=>i%2===1);
+  const priVoiceIds = voiceBlockIds.filter((_,i)=>i%2===0);
+  for(const m of doubledPitches){
+    const sec=secInfo.get(m);
+    const idx=pitches.indexOf(m);
+    const x=(idx-(P-1)/2)*spacing;
+    nodes.push({objectID:sec.triggerId,levelNodeTrigger:{
+      shape:1000,position:{x,y:-1.2,z:0},scale:{x:1.1,y:1.1,z:1.1},rotation:{x:0,y:0,z:0,w:1},isShared:false,
+      triggerSources:(secVoiceIds.length>0?secVoiceIds:voiceBlockIds).map(id=>({triggerSourceBasic:{type:4,objectID:id}})),
+      triggerTargets:[{triggerTargetSound:{objectID:sec.soundId,mode:1}}]
+    }});
   }
+
+  // ── Voice block animations ────────────────────────────────────────────────
+  const HOLD=0.10,AWAY_Z_BASE=2.5,AWAY_Z_STEP=0.25,HIT_Z=0;
+  const framesByVoice=Array.from({length:voiceCount},()=>[]);
   const chordGroups=[...groups.entries()].sort((a,b)=>+a[0]-+b[0]).map(([,g])=>g.sort((a,b)=>a.midi-b.midi));
 
   for(const group of chordGroups){
+    // Track how many times each pitch appears so 2nd occurrence goes to sec trigger
+    const pitchCount=new Map();
     group.forEach((ev,idx)=>{
-      const vi=Math.min(idx,voiceCount-1);
+      const count=(pitchCount.get(ev.midi)||0);
+      pitchCount.set(ev.midi,count+1);
+      // For 2nd+ occurrences of same pitch, use odd voice indices (secondary triggers)
+      const isDouble=count>0;
+      // Pick voice index: primary uses even slots, secondary uses odd slots
+      let vi;
+      if(!isDouble){
+        // primary occurrence: assign normally but prefer even slots
+        const priIdx=group.filter((e,i)=>i<idx&&(pitchCount.get(e.midi)||0)===0).length;
+        vi=Math.min(priIdx*2,voiceCount-1);
+      } else {
+        // secondary occurrence: use odd slots
+        const secIdx=group.filter((e,i)=>i<idx&&(pitchCount.get(e.midi)||1)>1).length;
+        vi=Math.min(secIdx*2+1,voiceCount-1);
+      }
       const x=(pitches.indexOf(ev.midi)-(P-1)/2)*spacing;
       const awayZ=AWAY_Z_BASE+vi*AWAY_Z_STEP;
       const t0=Math.max(0,ev.time-HOLD),t1=ev.time,t2=ev.time+HOLD;
@@ -729,6 +815,7 @@ function buildLevelJSON({events, voiceCount, spacing, vol, atk, wave, title}){
       );
     });
   }
+
   for(let v=0;v<voiceCount;v++){
     const awayZ=AWAY_Z_BASE+v*AWAY_Z_STEP;
     const frames=framesByVoice[v];
@@ -741,14 +828,21 @@ function buildLevelJSON({events, voiceCount, spacing, vol, atk, wave, title}){
         isGrapplable:false,isPassable:false,isAdditive:false,specularBrightness:.2}
     });
   }
+
+  const totalSounds=P+D;
   return {formatVersion:17,title:title||'midi_level',creators:'MIDI2GRAB',
-    description:`${P} sounds · ${voiceCount} voice blocks · ${events.length} notes`,
-    tags:['Innovative'],maxCheckpointCount:10,fogDensity:0,
+    description:`${P} pitches · ${D>0?D+' doubled · ':''}${voiceCount} voice blocks · ${events.length} notes`,
+    tags:['midi','music','generated'],maxCheckpointCount:10,fogDensity:0,
     ambienceSettings:{skyZenithColor:{r:.04,g:.05,b:.10,a:1},skyHorizonColor:{r:.08,g:.10,b:.16,a:1},
       sunAltitude:30,sunAzimuth:270,sunSize:.5,fogDensity:0},
     levelNodes:nodes,
-    _nodeGuide:{soundBlocks:`objectID 1 to ${P}`,triggerBlocks:`objectID ${P+1} to ${P*2}`,
-      voiceBlocks:`objectID ${BLOCK_ID_BASE} to ${BLOCK_ID_BASE+voiceCount-1}`}
+    _nodeGuide:{
+      primarySounds:`objectID 1 to ${P}`,
+      primaryTriggers:`objectID ${P+1} to ${P*2}`,
+      secondarySounds:D>0?`objectID ${secSoundBase} to ${secSoundBase+D-1}`:'none',
+      secondaryTriggers:D>0?`objectID ${secTrigBase} to ${secTrigBase+D-1}`:'none',
+      voiceBlocks:`objectID ${BLOCK_ID_BASE} to ${BLOCK_ID_BASE+voiceCount-1}`
+    }
   };
 }
 
