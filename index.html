@@ -760,7 +760,7 @@ function buildLevelJSON({events, voiceCount, spacing, vol, atk, wave, title, use
     nodes.push({objectID:info.triggerId,levelNodeTrigger:{
       shape:1000,position:{x,y:0,z:0},scale:{x:1.1,y:1.1,z:1.1},rotation:{x:0,y:0,z:0,w:1},isShared:false,
       triggerSources:voiceBlockIds.map(id=>({triggerSourceBasic:{type:4,objectID:id}})),
-      triggerTargets:[{triggerTargetSound:{objectID:info.soundId,mode:1}}]
+      triggerTargets:[{triggerTargetSound:{objectID:info.soundId,mode:4}}]
     }});
   }
 
