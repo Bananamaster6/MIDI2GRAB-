@@ -360,7 +360,6 @@ input[type=range]::-moz-range-thumb{width:17px;height:17px;border-radius:50%;bac
               <option value="1">1. Square</option>
               <option value="3" selected>2. Sawtooth</option>
               <option value="0">3. Sine</option>
-              <option value="2">4. Triangle</option>
             </select></div>
         </div>
 
@@ -677,200 +676,259 @@ function compactEvents(list, grid=0.04){
   return [...map.values()].sort((a,b)=>a.time-b.time||a.midi-b.midi);
 }
 
-function buildLevelJSON({events, voiceCount, spacing, vol, atk, wave, title, useInstrRecreation=false, pitchProgramMap=null, gmToParams=null, useDupeNotes=false}){
+function buildLevelJSON({events, voiceCount, spacing, vol, atk, wave, title, useInstrRecreation=false, trackInstruments=null, useDupeNotes=false}){
   const waveType = Math.min(3, Math.max(0, Math.round(wave)));
-  const pitchSet=new Set(events.map(e=>e.midi));
-  const pitches=[...pitchSet].sort((a,b)=>a-b);
-  const P=pitches.length;
-  const pitchInfo=new Map();
-  pitches.forEach((m,idx)=>{pitchInfo.set(m,{soundId:idx+1,triggerId:P+idx+1,freq:midiFreq(m),name:noteName(m)});});
-  const songDuration=events.length?Math.max(...events.map(e=>e.time+e.dur)):0;
 
-  // Duplicate detection — only active when useDupeNotes is on
-  const CHORD_WINDOW=0.03;
-  const groups=new Map();
-  for(const ev of events){
-    const key=Math.round(ev.time/CHORD_WINDOW);
-    if(!groups.has(key)) groups.set(key,[]);
-    groups.get(key).push(ev);
+  // ── GM instrument → GRAB sound parameters ──────────────────────────────
+  // GRAB waveType: 0=sine, 1=square, 3=sawtooth (no triangle in GRAB)
+  function gmToSoundParams(prog, baseVol){
+    const p = Math.max(0, Math.min(127, prog||0));
+    let wt=3, ak=0.01, su=0.10, rl=0.12, pu=0,
+        duty=0.5, vibStr=0, vibSpd=0,
+        lpf=10000, hpf=0, frq=0, frd=0, rep=0;
+
+    if(p<=7){        // Piano — sine, moderate decay, slight punch
+      wt=0; ak=0.004; su=0.12; rl=0.28; pu=0.08;
+    } else if(p<=15){ // Chromatic perc (bells, vibraphone, xylophone) — sine, very fast attack, long ring
+      wt=0; ak=0.001; su=0.04; rl=0.5; pu=0.25; vibStr=0.04; vibSpd=7;
+    } else if(p<=23){ // Organ — square, instant attack, long sustain, instant release
+      wt=1; ak=0.005; su=0.95; rl=0.02; duty=0.5; lpf=7500;
+    } else if(p<=27){ // Acoustic/steel guitar — square, short decay, pluck punch
+      wt=1; ak=0.004; su=0.07; rl=0.22; pu=0.14; duty=0.5;
+    } else if(p<=31){ // Electric/distorted guitar — sawtooth, grittier
+      wt=3; ak=0.003; su=0.06; rl=0.2; pu=0.2; lpf=7000; frq=-0.003;
+    } else if(p<=39){ // Bass — sine, punchy low end, slow freq ramp down
+      wt=0; ak=0.007; su=0.18; rl=0.16; lpf=4500; pu=0.18; frq=-0.012;
+    } else if(p<=47){ // Strings — sawtooth, slow attack, vibrato
+      wt=3; ak=0.09; su=0.75; rl=0.22; vibStr=0.09; vibSpd=5.5; lpf=8500;
+    } else if(p<=55){ // Ensemble / choir — sawtooth, very slow attack, rich vibrato
+      wt=3; ak=0.14; su=0.85; rl=0.32; vibStr=0.07; vibSpd=4.5; lpf=8000;
+    } else if(p<=63){ // Brass (trumpet, trombone) — square, medium attack, punch
+      wt=1; ak=0.04; su=0.65; rl=0.10; duty=0.38; pu=0.28;
+    } else if(p<=71){ // Reed (sax, clarinet, oboe) — square, breathier duty
+      wt=1; ak=0.03; su=0.72; rl=0.13; duty=0.44; vibStr=0.05; vibSpd=5.2;
+    } else if(p<=79){ // Pipe / flute — sine, breathy slow attack, gentle vibrato
+      wt=0; ak=0.07; su=0.82; rl=0.18; vibStr=0.06; vibSpd=5.8; lpf=9200;
+    } else if(p<=87){ // Synth Lead — sawtooth or square alternating, bright
+      wt=(p%2===0)?3:1; ak=0.008; su=0.55; rl=0.09; duty=0.48; frq=0.008;
+    } else if(p<=95){ // Synth Pad — sine, very slow attack, long release
+      wt=0; ak=0.18; su=0.92; rl=0.55; vibStr=0.04; vibSpd=3.5; lpf=6500;
+    } else if(p<=103){ // Synth FX — sawtooth, pitch ramp, weird
+      wt=3; ak=0.02; su=0.28; rl=0.45; frq=0.04; frd=0.012;
+    } else if(p<=111){ // Ethnic — sawtooth, quick pluck
+      wt=3; ak=0.006; su=0.10; rl=0.28; pu=0.12; vibStr=0.025; vibSpd=4;
+    } else if(p<=119){ // Percussive / drums — square burst, huge punch, very short, freq drops fast
+      wt=1; ak=0.001; su=0.01; rl=0.07; pu=0.65; frq=-0.06; frd=0.025; lpf=11000; hpf=800;
+    } else {            // Sound effects — sine glide up
+      wt=0; ak=0.06; su=0.45; rl=0.52; frq=0.06;
+    }
+
+    return {
+      volume:baseVol, waveType:wt,
+      envelopeAttack:ak, envelopeSustain:su, envelopeRelease:rl, envelopePunch:pu,
+      frequencyLimit:30, frequencyRamp:frq, frequencyDeltaRamp:frd,
+      vibratoStrength:vibStr, vibratoSpeed:vibSpd,
+      pitchJumpMod:0, pitchJumpSpeed:0,
+      dutyCycle:duty, dutyCycleRamp:0,
+      repeatSpeed:rep, flangerFrequency:0, flangerDepth:0,
+      lowPassFilterFrequency:lpf, highPassFilterFrequency:hpf,
+      reverbDelay:0, reverbDecayFactor:0
+    };
   }
-  const needsDouble=new Set();
-  if(useDupeNotes){
-    for(const [,grp] of groups){
-      const seen=new Set();
-      for(const ev of grp){if(seen.has(ev.midi)) needsDouble.add(ev.midi);seen.add(ev.midi);}
+
+  function defaultSoundParams(freq){
+    return {
+      volume:vol, waveType,
+      envelopeAttack:atk, envelopeSustain:0.10, envelopeRelease:0.12, envelopePunch:0,
+      frequencyBase:Math.round(freq), frequencyLimit:30,
+      frequencyRamp:0, frequencyDeltaRamp:0, vibratoStrength:0, vibratoSpeed:0,
+      pitchJumpMod:0, pitchJumpSpeed:0, dutyCycle:0.5, dutyCycleRamp:0,
+      repeatSpeed:0, flangerFrequency:0, flangerDepth:0,
+      lowPassFilterFrequency:10000, highPassFilterFrequency:0,
+      reverbDelay:0, reverbDecayFactor:0
+    };
+  }
+
+  // ── Build unique sound keys ──────────────────────────────────────────────
+  // When instrument recreation is ON: one sound block per (pitch × program) combo.
+  // This means if piano plays C4 AND strings play C4, there are 2 separate sound blocks for C4.
+  // When OFF: one sound block per pitch (original behaviour).
+
+  // Collect all (midi, program) pairs that actually appear
+  const soundKeys = []; // {midi, program, freq, name}
+  const soundKeySet = new Set();
+  const eventsWithProgram = events.map(ev => ({
+    ...ev,
+    program: (useInstrRecreation && trackInstruments) ? (ev.program ?? 0) : 0
+  }));
+
+  for(const ev of eventsWithProgram){
+    const key = useInstrRecreation ? `${ev.midi}_${ev.program}` : `${ev.midi}`;
+    if(!soundKeySet.has(key)){
+      soundKeySet.add(key);
+      soundKeys.push({midi:ev.midi, program:ev.program??0, freq:midiFreq(ev.midi), name:noteName(ev.midi), key});
     }
   }
-  const doubledPitches=[...needsDouble].sort((a,b)=>a-b);
-  const D=doubledPitches.length;
-  const secSoundBase=P*2+1, secTrigBase=secSoundBase+D, BLOCK_ID_BASE=secTrigBase+D;
-  const voiceBlockIds=Array.from({length:voiceCount},(_,i)=>BLOCK_ID_BASE+i);
-  const secInfo=new Map();
-  doubledPitches.forEach((m,i)=>secInfo.set(m,{soundId:secSoundBase+i,triggerId:secTrigBase+i}));
-  const nodes=[];
+  soundKeys.sort((a,b)=>a.midi-b.midi||(a.program-b.program));
 
-  // Build sound params — uses GM instrument map if instrument recreation is on
-  function soundParams(m){
-    if(useInstrRecreation && pitchProgramMap && gmToParams){
-      const prog=pitchProgramMap.get(m)??0;
-      const p=gmToParams(prog,vol);
-      return {...p, frequencyBase:Math.round(midiFreq(m))};
-    }
-    return {volume:vol,waveType,envelopeAttack:atk,envelopeSustain:.10,envelopeRelease:.12,
-      envelopePunch:0,frequencyBase:Math.round(midiFreq(m)),frequencyLimit:30,
-      frequencyRamp:0,frequencyDeltaRamp:0,vibratoStrength:0,vibratoSpeed:0,
-      pitchJumpMod:0,pitchJumpSpeed:0,dutyCycle:.5,dutyCycleRamp:0,
-      repeatSpeed:0,flangerFrequency:0,flangerDepth:0,
-      lowPassFilterFrequency:10000,highPassFilterFrequency:0,
-      reverbDelay:0,reverbDecayFactor:0};
-  }
-
-  // ── Primary sound blocks ──────────────────────────────────────────────────
-  for(const m of pitches){
-    const info=pitchInfo.get(m);
-    const idx=pitches.indexOf(m);
-    const x=(idx-(P-1)/2)*spacing;
-    nodes.push({objectID:info.soundId,levelNodeSound:{
-      position:{x,y:2,z:0},rotation:{x:0,y:0,z:0,w:1},scale:{x:1,y:1,z:1},
-      startActive:false,
-      parameters:soundParams(m),
-      volume:vol,maxRangeFactor:1000,repeat:false,name:`sound_${info.name.replace('#','s')}_${m}`
-    }});
-  }
-
-  // ── Secondary sound blocks (for doubled pitches) ──────────────────────────
-  for(const m of doubledPitches){
-    const info=pitchInfo.get(m);
-    const sec=secInfo.get(m);
-    const idx=pitches.indexOf(m);
-    const x=(idx-(P-1)/2)*spacing;
-    nodes.push({objectID:sec.soundId,levelNodeSound:{
-      position:{x,y:3.2,z:0},rotation:{x:0,y:0,z:0,w:1},scale:{x:1,y:1,z:1},
-      startActive:false,
-      parameters:soundParams(m),
-      volume:vol,maxRangeFactor:1000,repeat:false,name:`sound2_${info.name.replace('#','s')}_${m}`
-    }});
-  }
-
-  // ── Primary trigger blocks ────────────────────────────────────────────────
-  for(const m of pitches){
-    const info=pitchInfo.get(m);
-    const idx=pitches.indexOf(m);
-    const x=(idx-(P-1)/2)*spacing;
-    nodes.push({objectID:info.triggerId,levelNodeTrigger:{
-      shape:1000,position:{x,y:0,z:0},scale:{x:1.1,y:1.1,z:1.1},rotation:{x:0,y:0,z:0,w:1},isShared:false,
-      triggerSources:voiceBlockIds.map(id=>({triggerSourceBasic:{type:4,objectID:id}})),
-      triggerTargets:[{triggerTargetSound:{objectID:info.soundId,mode:1}}]
-    }});
-  }
-
-  // ── Secondary trigger blocks (for doubled pitches) ────────────────────────
-  // Also listen to ALL voice blocks — positioned at y=-1.2 so they get hit by
-  // the same sweeping blocks when they pass through that row
-  for(const m of doubledPitches){
-    const sec=secInfo.get(m);
-    const idx=pitches.indexOf(m);
-    const x=(idx-(P-1)/2)*spacing;
-    nodes.push({objectID:sec.triggerId,levelNodeTrigger:{
-      shape:1000,position:{x,y:-1.2,z:0},scale:{x:1.1,y:1.1,z:1.1},rotation:{x:0,y:0,z:0,w:1},isShared:false,
-      triggerSources:voiceBlockIds.map(id=>({triggerSourceBasic:{type:4,objectID:id}})),
-      triggerTargets:[{triggerTargetSound:{objectID:sec.soundId,mode:1}}]
-    }});
-  }
-
-  // ── Voice block animations ────────────────────────────────────────────────
-  // Strategy: round-robin voice assignment across all voiceCount blocks.
-  // Each note event gets the next available voice block in a cycle.
-  // Duplicate pitches (same pitch same chord) are fine because each gets its own voice.
-  // Every voice block is used since we cycle 0..voiceCount-1 continuously.
-  const HOLD=0.10, AWAY_Z_BASE=2.5, AWAY_Z_STEP=0, HIT_Z=0;
-  const framesByVoice = Array.from({length:voiceCount}, ()=>[]);
-
-  // Initialize all voice blocks with a starting frame so none are empty
-  for(let v=0;v<voiceCount;v++){
-    const awayZ = AWAY_Z_BASE + v*AWAY_Z_STEP;
-    framesByVoice[v].push({time:0, position:{x:0,y:0,z:awayZ}, rotation:{x:0,y:0,z:0,w:1}});
-  }
-
-  // Sort all events by time
-  const sortedEvents = [...events].sort((a,b)=>a.time-b.time);
-
-  // Track the next free voice for primary and secondary separately
-  // We use a simple counter that wraps around voiceCount
-  let voiceCursor = 0;
-
-  // For each event, assign it a voice block via round-robin
-  // Duplicate pitch detection: within CHORD_WINDOW, same pitch → secondary trigger
-  const eventVoiceMap = new Map(); // event index → voiceIdx
-  const lastAssignedVoicePerPitch = new Map(); // midi → {time, voiceIdx}
-
-  sortedEvents.forEach((ev, ei)=>{
-    // Round-robin: just take the next voice block
-    const vi = voiceCursor % voiceCount;
-    voiceCursor++;
-    eventVoiceMap.set(ei, {vi, ev});
-
-    const x = (pitches.indexOf(ev.midi)-(P-1)/2)*spacing;
-    const awayZ = AWAY_Z_BASE + vi*AWAY_Z_STEP;
-    const t0 = Math.max(0, ev.time-HOLD);
-    const t1 = ev.time;
-    const t2 = ev.time+HOLD;
-
-    framesByVoice[vi].push(
-      {time:t0, position:{x,y:0,z:awayZ}, rotation:{x:0,y:0,z:0,w:1}},
-      {time:t1, position:{x,y:0,z:awayZ}, rotation:{x:0,y:0,z:0,w:1}},
-      {time:t1, position:{x,y:0,z:HIT_Z},  rotation:{x:0,y:0,z:0,w:1}},
-      {time:t2, position:{x,y:0,z:HIT_Z},  rotation:{x:0,y:0,z:0,w:1}},
-      {time:t2, position:{x,y:0,z:awayZ}, rotation:{x:0,y:0,z:0,w:1}}
-    );
+  const S = soundKeys.length;
+  // Map key → {soundId, triggerId, x position}
+  const soundMap = new Map();
+  soundKeys.forEach((sk, i)=>{
+    const x = (i - (S-1)/2) * spacing;
+    soundMap.set(sk.key, {soundId:i+1, triggerId:S+i+1, x, ...sk});
   });
 
-  // All triggers listen to ALL voice blocks (standard GRAB approach).
-  // Primary triggers at y=0, secondary (duplicate pitch) triggers at y=-1.2.
-  // When a voice block passes through y=0 it fires the primary sound.
-  // When it passes through y=-1.2 it fires the secondary sound.
-  // This works because triggers have a hitbox volume — the voice block sweeps through.
-  // The primary triggers already cover all voices so duplicates naturally re-fire
-  // the primary sound. The secondary sound trigger listens to the same voices but
-  // is positioned lower so a second pass (from the same chord) hits it.
+  // ── Dupe note detection ──────────────────────────────────────────────────
+  // When useDupeNotes: if the exact same (midi, program) key plays twice in same chord window,
+  // create a SECOND sound+trigger in the main row (different x, offset by +spacing*0.5).
+  const CHORD_WINDOW = 0.03;
+  const chordGroups = new Map();
+  for(const ev of eventsWithProgram){
+    const ck = Math.round(ev.time/CHORD_WINDOW);
+    if(!chordGroups.has(ck)) chordGroups.set(ck,[]);
+    chordGroups.get(ck).push(ev);
+  }
+  const needsDupe = new Set(); // keys that need a secondary
+  if(useDupeNotes){
+    for(const [,grp] of chordGroups){
+      const seen = new Set();
+      for(const ev of grp){
+        const k = `${ev.midi}_${ev.program??0}`;
+        if(seen.has(k)) needsDupe.add(k);
+        seen.add(k);
+      }
+    }
+  }
 
-  // Re-wire primary triggers to ALL voice blocks (they already are)
-  // Re-wire secondary triggers to ALL voice blocks as well
-  // The separation is positional (y offset) not voice-set based.
+  const dupeSoundBase = S*2 + 1;
+  const dupeTrigBase = dupeSoundBase + needsDupe.size;
+  const BLOCK_ID_BASE = dupeTrigBase + needsDupe.size;
+  const voiceBlockIds = Array.from({length:voiceCount}, (_,i)=>BLOCK_ID_BASE+i);
 
-  // Fix secondary triggers to also listen to all voices
-  // (already done above — secVoiceIds was the bug, now we use voiceBlockIds for both)
+  const dupeKeys = [...needsDupe].sort();
+  const dupeMap = new Map();
+  dupeKeys.forEach((k,i)=>{
+    const base = soundMap.get(k);
+    // Place dupe trigger in main row, offset 0.5 spacing to the right of the original
+    const x = base ? base.x + spacing*0.5 : i*spacing;
+    dupeMap.set(k, {soundId:dupeSoundBase+i, triggerId:dupeTrigBase+i, x});
+  });
+
+  const songDuration = events.length ? Math.max(...events.map(e=>e.time+e.dur)) : 0;
+  const nodes = [];
+
+  // ── Sound blocks ─────────────────────────────────────────────────────────
+  for(const [key, info] of soundMap){
+    const params = useInstrRecreation
+      ? {...gmToSoundParams(info.program, vol), frequencyBase:Math.round(info.freq)}
+      : defaultSoundParams(info.freq);
+    const label = useInstrRecreation ? `sound_${info.name.replace('#','s')}_p${info.program}` : `sound_${info.name.replace('#','s')}_${info.midi}`;
+    nodes.push({objectID:info.soundId, levelNodeSound:{
+      position:{x:info.x, y:2, z:0}, rotation:{x:0,y:0,z:0,w:1}, scale:{x:1,y:1,z:1},
+      startActive:false, parameters:params,
+      volume:vol, maxRangeFactor:1000, repeat:false, name:label
+    }});
+  }
+  // Dupe secondary sound blocks
+  for(const [key, dInfo] of dupeMap){
+    const base = soundMap.get(key);
+    const params = useInstrRecreation
+      ? {...gmToSoundParams(base.program, vol), frequencyBase:Math.round(base.freq)}
+      : defaultSoundParams(base.freq);
+    nodes.push({objectID:dInfo.soundId, levelNodeSound:{
+      position:{x:dInfo.x, y:2, z:0}, rotation:{x:0,y:0,z:0,w:1}, scale:{x:1,y:1,z:1},
+      startActive:false, parameters:params,
+      volume:vol, maxRangeFactor:1000, repeat:false, name:`sound2_${base.name.replace('#','s')}_${base.midi}`
+    }});
+  }
+
+  // ── Trigger blocks ────────────────────────────────────────────────────────
+  for(const [key, info] of soundMap){
+    nodes.push({objectID:info.triggerId, levelNodeTrigger:{
+      shape:1000, position:{x:info.x, y:0, z:0},
+      scale:{x:1.1,y:1.1,z:1.1}, rotation:{x:0,y:0,z:0,w:1}, isShared:false,
+      triggerSources:voiceBlockIds.map(id=>({triggerSourceBasic:{type:4,objectID:id}})),
+      triggerTargets:[{triggerTargetSound:{objectID:info.soundId, mode:1}}]
+    }});
+  }
+  // Dupe secondary triggers — in the main row at y=0, just offset x
+  for(const [key, dInfo] of dupeMap){
+    nodes.push({objectID:dInfo.triggerId, levelNodeTrigger:{
+      shape:1000, position:{x:dInfo.x, y:0, z:0},
+      scale:{x:1.1,y:1.1,z:1.1}, rotation:{x:0,y:0,z:0,w:1}, isShared:false,
+      triggerSources:voiceBlockIds.map(id=>({triggerSourceBasic:{type:4,objectID:id}})),
+      triggerTargets:[{triggerTargetSound:{objectID:dInfo.soundId, mode:1}}]
+    }});
+  }
+
+  // ── Voice block animations (round-robin) ──────────────────────────────────
+  const HOLD=0.10, AWAY_Z_BASE=2.5, AWAY_Z_STEP=0.25, HIT_Z=0;
+  const framesByVoice = Array.from({length:voiceCount}, ()=>[]);
+  for(let v=0;v<voiceCount;v++){
+    const az = AWAY_Z_BASE + v*AWAY_Z_STEP;
+    framesByVoice[v].push({time:0, position:{x:0,y:0,z:az}, rotation:{x:0,y:0,z:0,w:1}});
+  }
+
+  let cursor = 0;
+  const sortedEvs = [...eventsWithProgram].sort((a,b)=>a.time-b.time);
+  // Track dupe occurrences per chord
+  const chordSeen = new Map();
+  for(const ev of sortedEvs){
+    const ck = Math.round(ev.time/CHORD_WINDOW);
+    const ekey = `${ev.midi}_${ev.program??0}`;
+    if(!chordSeen.has(ck)) chordSeen.set(ck, new Map());
+    const seen = chordSeen.get(ck);
+    const count = seen.get(ekey)||0;
+    seen.set(ekey, count+1);
+
+    const isDupe = count > 0 && needsDupe.has(ekey);
+    const info = isDupe ? dupeMap.get(ekey) : soundMap.get(ekey);
+    if(!info) continue;
+
+    const vi = cursor % voiceCount; cursor++;
+    const az = AWAY_Z_BASE + vi*AWAY_Z_STEP;
+    const t0 = Math.max(0, ev.time-HOLD), t1=ev.time, t2=ev.time+HOLD;
+    framesByVoice[vi].push(
+      {time:t0, position:{x:info.x,y:0,z:az}, rotation:{x:0,y:0,z:0,w:1}},
+      {time:t1, position:{x:info.x,y:0,z:az}, rotation:{x:0,y:0,z:0,w:1}},
+      {time:t1, position:{x:info.x,y:0,z:HIT_Z}, rotation:{x:0,y:0,z:0,w:1}},
+      {time:t2, position:{x:info.x,y:0,z:HIT_Z}, rotation:{x:0,y:0,z:0,w:1}},
+      {time:t2, position:{x:info.x,y:0,z:az}, rotation:{x:0,y:0,z:0,w:1}}
+    );
+  }
 
   for(let v=0;v<voiceCount;v++){
-    const awayZ = AWAY_Z_BASE + v*AWAY_Z_STEP;
-    framesByVoice[v].push({time:songDuration+1, position:{x:0,y:0,z:awayZ}, rotation:{x:0,y:0,z:0,w:1}});
+    const az = AWAY_Z_BASE + v*AWAY_Z_STEP;
+    framesByVoice[v].push({time:songDuration+1, position:{x:0,y:0,z:az}, rotation:{x:0,y:0,z:0,w:1}});
     nodes.push({
-      objectID: voiceBlockIds[v],
-      animations:[{name:`voice_${v}`, speed:1, currentFrameIndex:0, frames:framesByVoice[v]}],
+      objectID:voiceBlockIds[v],
+      animations:[{name:`anim_${v}`, speed:1, currentFrameIndex:0, frames:framesByVoice[v]}],
       activeAnimation:0,
       levelNodeStatic:{
-        shape:1000, material:8,
-        position:{x:0,y:0,z:awayZ},
-        scale:{x:.8,y:.8,z:.8},
-        rotation:{x:0,y:0,z:0,w:1},
+        shape:1000, material:8, position:{x:0,y:0,z:az},
+        scale:{x:.8,y:.8,z:.8}, rotation:{x:0,y:0,z:0,w:1},
         isNeon:true, isTransparent:false, isGrabbable:false,
-        isGrapplable:false, isPassable:false, isAdditive:false, specularBrightness:.2
+        isGrapplable:false, isPassable:false, isAdditive:false, specularBrightness:0.2
       }
     });
   }
 
-  const totalSounds=P+D;
-  return {formatVersion:17,title:title||'midi_level',creators:'MIDI2GRAB',
-    description:`${P} pitches · ${D>0?D+' doubled · ':''}${voiceCount} animated blocks · ${events.length} notes`,
-    tags:['innovative','showcase'],maxCheckpointCount:10,fogDensity:0,
-    ambienceSettings:{skyZenithColor:{r:.04,g:.05,b:.10,a:1},skyHorizonColor:{r:.08,g:.10,b:.16,a:1},
-      sunAltitude:30,sunAzimuth:270,sunSize:.5,fogDensity:0},
+  const instrCount = useInstrRecreation ? new Set(soundKeys.map(k=>k.program)).size : 1;
+  return {
+    formatVersion:17, title:title||'midi_level', creators:'MIDI2GRAB',
+    description:`${S} sounds · ${voiceCount} animated blocks · ${events.length} notes${useInstrRecreation?' · '+instrCount+' instrument'+(instrCount!==1?'s':''):''}`,
+    tags:['innovative','showcase'], maxCheckpointCount:10, fogDensity:0,
+    ambienceSettings:{
+      skyZenithColor:{r:.04,g:.05,b:.10,a:1}, skyHorizonColor:{r:.08,g:.10,b:.16,a:1},
+      sunAltitude:30, sunAzimuth:270, sunSize:.5, fogDensity:0
+    },
     levelNodes:nodes,
     _nodeGuide:{
-      primarySounds:`objectID 1 to ${P}`,
-      primaryTriggers:`objectID ${P+1} to ${P*2}`,
-      secondarySounds:D>0?`objectID ${secSoundBase} to ${secSoundBase+D-1}`:'none',
-      secondaryTriggers:D>0?`objectID ${secTrigBase} to ${secTrigBase+D-1}`:'none',
+      soundBlocks:`objectID 1 to ${S}`,
+      triggerBlocks:`objectID ${S+1} to ${S*2}`,
+      dupeSounds:needsDupe.size>0?`objectID ${dupeSoundBase} to ${dupeSoundBase+needsDupe.size-1}`:'none',
+      dupeTriggers:needsDupe.size>0?`objectID ${dupeTrigBase} to ${dupeTrigBase+needsDupe.size-1}`:'none',
       voiceBlocks:`objectID ${BLOCK_ID_BASE} to ${BLOCK_ID_BASE+voiceCount-1}`
     }
   };
@@ -947,72 +1005,6 @@ document.querySelectorAll('.tab-btn').forEach(btn=>{
   dupeCheck.addEventListener('change',()=>{
     dupeDesc.style.display=dupeCheck.checked?'block':'none';
   });
-
-  // ── GM Instrument → GRAB sound params map ────────────────────────────────
-  // General MIDI programs 0-127 mapped to approximate GRAB sound parameters.
-  // Groups: piano(0-7), chromatic perc(8-15), organ(16-23), guitar(24-31),
-  //         bass(32-39), strings(40-47), ensemble(48-55), brass(56-63),
-  //         reed(64-71), pipe(72-79), synth lead(80-87), synth pad(88-95),
-  //         synth effects(96-103), ethnic(104-111), percussive(112-119), sound effects(120-127)
-  function gmToParams(program, vol){
-    const p=Math.max(0,Math.min(127,program||0));
-    // Defaults
-    let waveType=3, atk=0.01, sus=0.1, rel=0.12, punch=0,
-        duty=0.5, dutyRamp=0, vibStr=0, vibSpd=0,
-        lpf=10000, hpf=0, reverb=0, reverbDecay=0,
-        freqRamp=0, freqDelta=0, repeat=0, flange=0, flangeDepth=0;
-
-    if(p<=7){       // Piano family → sine
-      waveType=0; atk=0.004; sus=0.16; rel=0.24; punch=0.08; duty=0.5;
-    } else if(p<=15){ // Chromatic percussion (bells, xylophone, vibraphone)
-      waveType=0; atk=0.001; sus=0.05; rel=0.4; punch=0.2; vibStr=0.05; vibSpd=8;
-    } else if(p<=23){ // Organ
-      waveType=1; atk=0.01; sus=0.9; rel=0.05; duty=0.5; lpf=8000;
-    } else if(p<=31){ // Guitar family → square / saw / noisy edge
-      const g=p-24;
-      if(g<=3){        // nylon / steel / jazz / clean electric
-        waveType=1; atk=0.006; sus=0.09; rel=0.24; punch=0.12; duty=0.5;
-      } else if(g<=5){ // muted / overdriven
-        waveType=3; atk=0.004; sus=0.08; rel=0.25; punch=0.18; duty=0.55;
-      } else {         // distortion / harmonics
-        waveType=3; atk=0.003; sus=0.06; rel=0.2; punch=0.22; duty=0.42; lpf=7000; freqRamp=-0.004;
-      }
-    } else if(p<=39){ // Bass family → sine
-      waveType=0; atk=0.008; sus=0.2; rel=0.15; lpf=5000; punch=0.15; freqRamp=-0.01;
-    } else if(p<=47){ // Strings (violin, viola, cello)
-      waveType=2; atk=0.08; sus=0.7; rel=0.2; vibStr=0.08; vibSpd=6; lpf=9000;
-    } else if(p<=55){ // Ensemble (strings, choir)
-      waveType=2; atk=0.12; sus=0.8; rel=0.3; vibStr=0.06; vibSpd=5; lpf=8000;
-    } else if(p<=63){ // Brass (trumpet, trombone, tuba)
-      waveType=1; atk=0.04; sus=0.6; rel=0.1; duty=0.4; punch=0.25;
-    } else if(p<=71){ // Reed (sax, clarinet, oboe)
-      waveType=1; atk=0.03; sus=0.7; rel=0.12; duty=0.45; vibStr=0.04; vibSpd=5.5;
-    } else if(p<=79){ // Pipe (flute, recorder, pan flute)
-      waveType=0; atk=0.06; sus=0.8; rel=0.15; vibStr=0.05; vibSpd=6; lpf=9500;
-    } else if(p<=87){ // Synth Lead / retro 8-bit → saw or square
-      waveType=(p%2===0)?3:1; atk=0.01; sus=0.5; rel=0.1; duty=0.5; freqRamp=0.01;
-    } else if(p<=95){ // Synth Pad
-      waveType=2; atk=0.15; sus=0.9; rel=0.5; vibStr=0.03; vibSpd=4; lpf=7000;
-    } else if(p<=103){ // Synth Effects
-      waveType=3; atk=0.02; sus=0.3; rel=0.4; freqRamp=0.03; freqDelta=0.01;
-    } else if(p<=111){ // Ethnic
-      waveType=3; atk=0.008; sus=0.12; rel=0.3; punch=0.1; vibStr=0.02; vibSpd=4;
-    } else if(p<=119){ // Percussive / drums → noise-like burst
-      waveType=1; atk=0.001; sus=0.02; rel=0.08; punch=0.5; repeat=0; freqRamp=-0.02; freqDelta=0.02; lpf=12000; hpf=1200;
-    } else {           // Sound effects
-      waveType=0; atk=0.05; sus=0.5; rel=0.5; freqRamp=0.05;
-    }
-
-    return {volume:vol, waveType, envelopeAttack:atk, envelopeSustain:sus,
-      envelopeRelease:rel, envelopePunch:punch, frequencyLimit:30,
-      frequencyRamp:freqRamp, frequencyDeltaRamp:freqDelta,
-      vibratoStrength:vibStr, vibratoSpeed:vibSpd,
-      pitchJumpMod:0, pitchJumpSpeed:0,
-      dutyCycle:duty, dutyCycleRamp:dutyRamp,
-      repeatSpeed:repeat, flangerFrequency:flange, flangerLength:flange, flangerDepth:flangeDepth,
-      lowPassFilterFrequency:lpf, highPassFilterFrequency:hpf,
-      reverbDelay:reverb, reverbDecayFactor:reverbDecay};
-  }
 
   // Store per-pitch instrument program once MIDI is loaded
   let pitchProgram=new Map(); // midi note → GM program number
@@ -1101,13 +1093,24 @@ document.querySelectorAll('.tab-btn').forEach(btn=>{
     for(const t of tracks){
       const prog=t.instrument?.number??0;
       for(const n of t.notes){
+        // Store program ON THE EVENT so multi-instrument MIDIs keep separate programs per note
         raw.push({midi:n.midi,time:n.time,dur:Math.max(.04,n.duration),vel:n.velocity??0.8,program:prog});
-        // Map each pitch to the instrument that plays it most (last track wins if conflict)
-        pitchProgram.set(n.midi,prog);
+        if(!pitchProgram.has(n.midi)) pitchProgram.set(n.midi,prog);
       }
     }
     raw.sort((a,b)=>a.time-b.time||a.midi-b.midi);
     events=compactEvents(raw,.04);
+    // compactEvents loses per-event program; re-assign programs to compacted events
+    // by looking up in raw events (match by midi+time)
+    const rawByKey=new Map();
+    for(const r of raw){
+      const k=`${r.midi}|${(Math.round(r.time/0.04)*0.04).toFixed(3)}`;
+      if(!rawByKey.has(k)) rawByKey.set(k,r.program??0);
+    }
+    for(const ev of events){
+      const k=`${ev.midi}|${ev.time.toFixed(3)}`;
+      ev.program=rawByKey.get(k)??pitchProgram.get(ev.midi)??0;
+    }
     songDuration=events.length?Math.max(...events.map(e=>e.time+e.dur)):0;
     pitches=[...new Set(events.map(e=>e.midi))].sort((a,b)=>a-b);
     pitchInfo=new Map();
@@ -1130,7 +1133,6 @@ document.querySelectorAll('.tab-btn').forEach(btn=>{
       instrPill.innerHTML=`<b>Instruments:</b> `+[...instrSet].map(p=>`${GM_NAMES[p]||'Unknown'} (${p})`).join(', ');
       pillsEl.appendChild(instrPill);
     }
-    // table
     ntWrap.style.display='block';ntBody.innerHTML='';
     pitches.slice(0,200).forEach(m=>{
       const info=pitchInfo.get(m),tr=document.createElement('tr');
@@ -1138,7 +1140,7 @@ document.querySelectorAll('.tab-btn').forEach(btn=>{
       ntBody.appendChild(tr);
     });
     drawRoll();drawPlayhead(-1);stopBtn.disabled=true;playBtn.disabled=false;
-    ss(statusEl,`Ready. ${raw.length} raw → ${events.length} compacted notes. ${instrSet.size} instrument${instrSet.size!==1?'s':''} detected.`,'ok');
+    ss(statusEl,`Ready. ${raw.length} raw → ${events.length} compacted. ${instrSet.size} instrument${instrSet.size!==1?'s':''} detected.`,'ok');
   }
 
   function getAC(){if(!audioCtx) audioCtx=new(window.AudioContext||window.webkitAudioContext)();if(audioCtx.state==='suspended') audioCtx.resume();return audioCtx;}
@@ -1186,17 +1188,15 @@ document.querySelectorAll('.tab-btn').forEach(btn=>{
       wave:+waveSel.value,
       title:songNameEl.textContent.replace('.roll',''),
       useInstrRecreation:useInstr,
-      pitchProgramMap:pitchProgram,
-      gmToParams,
+      trackInstruments:true,
       useDupeNotes:useDupe
     });
     levelJson=json;
     const s=JSON.stringify(json,null,2);
     codeBox.textContent=s.slice(0,8000)+(s.length>8000?'\n\n// ...truncated':'');
-    const P=pitches.length;
     const instrNote=useInstr?' · instrument recreation on':'';
     const dupeNote=useDupe?' · dupe notes on':'';
-    ss(statusEl,`✓ ${P} sounds + ${P} triggers + ${VC} animated blocks. ${json.levelNodes.length} total nodes.${instrNote}${dupeNote}`,'ok');
+    ss(statusEl,`✓ ${json.levelNodes.length} total nodes built.${instrNote}${dupeNote}`,'ok');
     ss(expStatusEl,`${(s.length/1024).toFixed(1)} KB · ${json.levelNodes.length} nodes`,'ok');
     dlBtn.disabled=false;cpBtn.disabled=false;
   }
