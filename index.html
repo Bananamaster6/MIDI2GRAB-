@@ -373,14 +373,6 @@ input[type=range]::-moz-range-thumb{width:17px;height:17px;border-radius:50%;bac
           <div id="instrDesc" style="display:none;font-size:11px;color:var(--m);line-height:1.65;padding:8px 13px;border-radius:9px;background:rgba(255,179,71,.05);border:1px solid rgba(255,179,71,.15)">
             Reads the GM instrument from each MIDI track and maps it to matching sound block parameters — waveform, attack, sustain, duty cycle, vibrato, and more. Wave type selector is disabled while this is on.
           </div>
-          <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:10px 13px;border-radius:10px;border:1px solid var(--b);background:rgba(255,255,255,.02);transition:background .15s" id="exactLabel">
-            <input type="checkbox" id="exactCheck" style="width:16px;height:16px;accent-color:var(--a);cursor:pointer;flex-shrink:0"/>
-            <span style="font-size:13px;font-weight:600">Exact Note Length</span>
-            <span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:5px;background:rgba(61,252,190,.1);border:1px solid rgba(61,252,190,.25);color:var(--a);margin-left:auto;flex-shrink:0">NEW</span>
-          </label>
-          <div id="exactDesc" style="display:none;font-size:11px;color:var(--m);line-height:1.65;padding:8px 13px;border-radius:9px;background:rgba(61,252,190,.05);border:1px solid rgba(61,252,190,.15)">
-            Keeps animated blocks inside triggers for the full note duration, uses a 1 second repeat length with attack/release disabled, and puts sound blocks in one row with no pitch offset. Same-note duplication is disabled in this mode.
-          </div>
           <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:10px 13px;border-radius:10px;border:1px solid var(--b);background:rgba(255,255,255,.02);transition:background .15s" id="dupeLabel">
             <input type="checkbox" id="dupeCheck" style="width:16px;height:16px;accent-color:var(--a);cursor:pointer;flex-shrink:0"/>
             <span style="font-size:13px;font-weight:600">Same Note at Same Time</span>
@@ -388,6 +380,14 @@ input[type=range]::-moz-range-thumb{width:17px;height:17px;border-radius:50%;bac
           </label>
           <div id="dupeDesc" style="display:none;font-size:11px;color:var(--m);line-height:1.65;padding:8px 13px;border-radius:9px;background:rgba(155,127,255,.05);border:1px solid rgba(155,127,255,.15)">
             When the same pitch plays twice simultaneously, creates a second sound + trigger block for it so both fire independently. May not work perfectly on all MIDIs.
+          </div>
+          <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:10px 13px;border-radius:10px;border:1px solid var(--b);background:rgba(255,255,255,.02);transition:background .15s" id="exactLenLabel">
+            <input type="checkbox" id="exactLenCheck" style="width:16px;height:16px;accent-color:var(--a);cursor:pointer;flex-shrink:0"/>
+            <span style="font-size:13px;font-weight:600">Exact Length</span>
+            <span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:5px;background:rgba(61,252,190,.1);border:1px solid rgba(61,252,190,.25);color:var(--a);margin-left:auto;flex-shrink:0">BETA</span>
+          </label>
+          <div id="exactLenDesc" style="display:none;font-size:11px;color:var(--m);line-height:1.65;padding:8px 13px;border-radius:9px;background:rgba(61,252,190,.04);border:1px solid rgba(61,252,190,.12)">
+            Notes play for exactly their MIDI duration. Animated blocks enter the trigger on note-on and exit on note-off — the sound repeats while inside, then stops on leave. Attack &amp; release are zeroed automatically for seamless loops. Default sound length becomes ~1 s for best quality.
           </div>
         </div>
         <div class="r3">
@@ -593,6 +593,16 @@ input[type=range]::-moz-range-thumb{width:17px;height:17px;border-radius:50%;bac
           <div class="voice-hint">Recommended: 15–20 blocks.</div>
         </div>
 
+        <!-- Exact Length checkbox (compiler) -->
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:10px 13px;border-radius:10px;border:1px solid var(--b);background:rgba(255,255,255,.02);transition:background .15s" id="cmpExactLenLabel">
+          <input type="checkbox" id="cmpExactLenCheck" style="width:16px;height:16px;accent-color:var(--a);cursor:pointer;flex-shrink:0"/>
+          <span style="font-size:13px;font-weight:600">Exact Length</span>
+          <span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:5px;background:rgba(61,252,190,.1);border:1px solid rgba(61,252,190,.25);color:var(--a);margin-left:auto;flex-shrink:0">BETA</span>
+        </label>
+        <div id="cmpExactLenDesc" style="display:none;font-size:11px;color:var(--m);line-height:1.65;padding:8px 13px;border-radius:9px;background:rgba(61,252,190,.04);border:1px solid rgba(61,252,190,.12)">
+          Notes play for exactly their MIDI duration. Animated blocks enter the trigger on note-on and exit on note-off — the sound repeats while inside, then stops on leave. Attack &amp; release are zeroed automatically for seamless loops.
+        </div>
+
         <!-- Output format toggle -->
         <div class="field">
           <label>Output Format</label>
@@ -604,15 +614,6 @@ input[type=range]::-moz-range-thumb{width:17px;height:17px;border-radius:50%;bac
             <span style="color:var(--a)">ⓘ</span> <span style="color:var(--m)"><b style="color:var(--t)">.json</b> — readable JSON, open in any text editor or grab-tools.live JSON editor.<br>
             <b style="color:var(--t)">.level</b> — same JSON content, GRAB's preferred extension. Drop directly into <code>Documents/GRAB/levels/user</code> (PC) or <code>Android/data/com.slindev.grab/levels/user</code> (Quest).</span>
           </div>
-        </div>
-
-        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:10px 13px;border-radius:10px;border:1px solid var(--b);background:rgba(255,255,255,.02);transition:background .15s" id="cmpExactLabel">
-          <input type="checkbox" id="cmpExactCheck" style="width:16px;height:16px;accent-color:var(--a);cursor:pointer;flex-shrink:0"/>
-          <span style="font-size:13px;font-weight:600">Exact Note Length</span>
-          <span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:5px;background:rgba(61,252,190,.1);border:1px solid rgba(61,252,190,.25);color:var(--a);margin-left:auto;flex-shrink:0">NEW</span>
-        </label>
-        <div id="cmpExactDesc" style="display:none;font-size:11px;color:var(--m);line-height:1.65;padding:8px 13px;border-radius:9px;background:rgba(61,252,190,.05);border:1px solid rgba(61,252,190,.15)">
-          Keeps animated blocks inside triggers for the full note duration, uses a 1 second repeat length with attack/release disabled, and disables same-note duplication.
         </div>
 
         <div class="btn-row">
@@ -693,11 +694,8 @@ function compactEvents(list, grid=0.04){
   return [...map.values()].sort((a,b)=>a.time-b.time||a.midi-b.midi);
 }
 
-function buildLevelJSON({events, voiceCount, spacing, vol, atk, wave, title, useInstrRecreation=false, trackInstruments=null, useDupeNotes=false, exactLength=false}){
+function buildLevelJSON({events, voiceCount, spacing, vol, atk, wave, title, useInstrRecreation=false, trackInstruments=null, useDupeNotes=false, useExactLength=false}){
   const waveType = Math.min(3, Math.max(0, Math.round(wave)));
-  const layoutSpacing = exactLength ? 0 : spacing;
-  const exactRepeatSpeed = exactLength ? 1 : 0;
-  const exactAtk = exactLength ? 0 : atk;
 
   // ── GM instrument → GRAB sound parameters ──────────────────────────────
   // GRAB waveType: 0=sine, 1=square, 3=sawtooth (no triangle in GRAB)
@@ -745,25 +743,29 @@ function buildLevelJSON({events, voiceCount, spacing, vol, atk, wave, title, use
 
     return {
       volume:baseVol, waveType:wt,
-      envelopeAttack:exactLength ? 0 : ak, envelopeSustain:exactLength ? 1 : su, envelopeRelease:exactLength ? 0 : rl, envelopePunch:pu,
+      envelopeAttack:ak, envelopeSustain:su, envelopeRelease:rl, envelopePunch:pu,
       frequencyLimit:30, frequencyRamp:frq, frequencyDeltaRamp:frd,
       vibratoStrength:vibStr, vibratoSpeed:vibSpd,
       pitchJumpMod:0, pitchJumpSpeed:0,
       dutyCycle:duty, dutyCycleRamp:0,
-      repeatSpeed:exactLength ? 1 : rep, flangerFrequency:0, flangerDepth:0,
+      repeatSpeed:rep, flangerFrequency:0, flangerDepth:0,
       lowPassFilterFrequency:lpf, highPassFilterFrequency:hpf,
       reverbDelay:0, reverbDecayFactor:0
     };
   }
 
   function defaultSoundParams(freq){
+    // When exact length is on: kill attack/release, long sustain, ~1s loop
+    const ak = useExactLength ? 0.001 : atk;
+    const su = useExactLength ? 0.90  : 0.10;
+    const rl = useExactLength ? 0.001 : 0.12;
     return {
       volume:vol, waveType,
-      envelopeAttack:exactAtk, envelopeSustain:exactLength ? 1 : 0.10, envelopeRelease:exactLength ? 0 : 0.12, envelopePunch:0,
+      envelopeAttack:ak, envelopeSustain:su, envelopeRelease:rl, envelopePunch:0,
       frequencyBase:Math.round(freq), frequencyLimit:30,
       frequencyRamp:0, frequencyDeltaRamp:0, vibratoStrength:0, vibratoSpeed:0,
       pitchJumpMod:0, pitchJumpSpeed:0, dutyCycle:0.5, dutyCycleRamp:0,
-      repeatSpeed:exactRepeatSpeed, flangerFrequency:0, flangerDepth:0,
+      repeatSpeed:0, flangerFrequency:0, flangerDepth:0,
       lowPassFilterFrequency:10000, highPassFilterFrequency:0,
       reverbDelay:0, reverbDecayFactor:0
     };
@@ -792,11 +794,16 @@ function buildLevelJSON({events, voiceCount, spacing, vol, atk, wave, title, use
   soundKeys.sort((a,b)=>a.midi-b.midi||(a.program-b.program));
 
   const S = soundKeys.length;
-  // Map key → {soundId, triggerId, x position}
+  // Map key → {soundId, triggerId, leaveTriggerId (exact length only), x position}
+  // Normal:       sounds 1..S, enterTrigs S+1..2S
+  // ExactLength:  sounds 1..S, enterTrigs S+1..2S, leaveTrigs 2S+1..3S (shifts dupe/block IDs)
+  const leaveTrigOffset = useExactLength ? S : 0;
   const soundMap = new Map();
   soundKeys.forEach((sk, i)=>{
-    const x = exactLength ? 0 : (i - (S-1)/2) * layoutSpacing;
-    soundMap.set(sk.key, {soundId:i+1, triggerId:S+i+1, x, ...sk});
+    const x = (i - (S-1)/2) * spacing;
+    const enterTriggerId = S + i + 1;
+    const leaveTriggerId = useExactLength ? (2*S + i + 1) : null;
+    soundMap.set(sk.key, {soundId:i+1, triggerId:enterTriggerId, leaveTriggerId, x, ...sk});
   });
 
   // ── Dupe note detection ──────────────────────────────────────────────────
@@ -821,9 +828,10 @@ function buildLevelJSON({events, voiceCount, spacing, vol, atk, wave, title, use
     }
   }
 
-  const dupeSoundBase = S*2 + 1;
+  const dupeSoundBase = S*2 + 1 + leaveTrigOffset;
   const dupeTrigBase = dupeSoundBase + needsDupe.size;
-  const BLOCK_ID_BASE = dupeTrigBase + needsDupe.size;
+  const dupeLeaveTrigBase = useExactLength ? (dupeTrigBase + needsDupe.size) : null;
+  const BLOCK_ID_BASE = (useExactLength ? dupeLeaveTrigBase + needsDupe.size : dupeTrigBase + needsDupe.size);
   const voiceBlockIds = Array.from({length:voiceCount}, (_,i)=>BLOCK_ID_BASE+i);
 
   const dupeKeys = [...needsDupe].sort();
@@ -831,8 +839,9 @@ function buildLevelJSON({events, voiceCount, spacing, vol, atk, wave, title, use
   dupeKeys.forEach((k,i)=>{
     const base = soundMap.get(k);
     // Place dupe trigger in main row, offset 0.5 spacing to the right of the original
-    const x = exactLength ? 0 : (base ? base.x + layoutSpacing*0.5 : i*layoutSpacing);
-    dupeMap.set(k, {soundId:dupeSoundBase+i, triggerId:dupeTrigBase+i, x});
+    const x = base ? base.x + spacing*0.5 : i*spacing;
+    const dupeLeaveTriggerId = useExactLength ? (dupeLeaveTrigBase + i) : null;
+    dupeMap.set(k, {soundId:dupeSoundBase+i, triggerId:dupeTrigBase+i, leaveTriggerId:dupeLeaveTriggerId, x});
   });
 
   const songDuration = events.length ? Math.max(...events.map(e=>e.time+e.dur)) : 0;
@@ -841,36 +850,48 @@ function buildLevelJSON({events, voiceCount, spacing, vol, atk, wave, title, use
   // ── Sound blocks ─────────────────────────────────────────────────────────
   for(const [key, info] of soundMap){
     const params = useInstrRecreation
-      ? {...gmToSoundParams(info.program, vol), frequencyBase:Math.round(info.freq)}
+      ? {...gmToSoundParams(info.program, vol), frequencyBase:Math.round(info.freq),
+         ...(useExactLength ? {envelopeAttack:0.001,envelopeSustain:0.90,envelopeRelease:0.001} : {})}
       : defaultSoundParams(info.freq);
     const label = useInstrRecreation ? `sound_${info.name.replace('#','s')}_p${info.program}` : `sound_${info.name.replace('#','s')}_${info.midi}`;
     nodes.push({objectID:info.soundId, levelNodeSound:{
       position:{x:info.x, y:2, z:0}, rotation:{x:0,y:0,z:0,w:1}, scale:{x:1,y:1,z:1},
       startActive:false, parameters:params,
-      volume:vol, maxRangeFactor:1000, repeat:false, name:label
+      volume:vol, maxRangeFactor:1000, repeat:useExactLength, name:label
     }});
   }
   // Dupe secondary sound blocks
   for(const [key, dInfo] of dupeMap){
     const base = soundMap.get(key);
     const params = useInstrRecreation
-      ? {...gmToSoundParams(base.program, vol), frequencyBase:Math.round(base.freq)}
+      ? {...gmToSoundParams(base.program, vol), frequencyBase:Math.round(base.freq),
+         ...(useExactLength ? {envelopeAttack:0.001,envelopeSustain:0.90,envelopeRelease:0.001} : {})}
       : defaultSoundParams(base.freq);
     nodes.push({objectID:dInfo.soundId, levelNodeSound:{
       position:{x:dInfo.x, y:2, z:0}, rotation:{x:0,y:0,z:0,w:1}, scale:{x:1,y:1,z:1},
       startActive:false, parameters:params,
-      volume:vol, maxRangeFactor:1000, repeat:false, name:`sound2_${base.name.replace('#','s')}_${base.midi}`
+      volume:vol, maxRangeFactor:1000, repeat:useExactLength, name:`sound2_${base.name.replace('#','s')}_${base.midi}`
     }});
   }
 
   // ── Trigger blocks ────────────────────────────────────────────────────────
   for(const [key, info] of soundMap){
+    // Enter trigger (type 4 = object enters): play/restart sound
     nodes.push({objectID:info.triggerId, levelNodeTrigger:{
       shape:1000, position:{x:info.x, y:0, z:0},
       scale:{x:1.1,y:1.1,z:1.1}, rotation:{x:0,y:0,z:0,w:1}, isShared:false,
       triggerSources:voiceBlockIds.map(id=>({triggerSourceBasic:{type:4,objectID:id}})),
       triggerTargets:[{triggerTargetSound:{objectID:info.soundId, mode:1}}]
     }});
+    // Leave trigger (type 5 = object leaves): stop sound — only in exact length mode
+    if(useExactLength && info.leaveTriggerId){
+      nodes.push({objectID:info.leaveTriggerId, levelNodeTrigger:{
+        shape:1000, position:{x:info.x, y:0, z:0},
+        scale:{x:1.1,y:1.1,z:1.1}, rotation:{x:0,y:0,z:0,w:1}, isShared:false,
+        triggerSources:voiceBlockIds.map(id=>({triggerSourceBasic:{type:5,objectID:id}})),
+        triggerTargets:[{triggerTargetSound:{objectID:info.soundId, mode:0}}]
+      }});
+    }
   }
   // Dupe secondary triggers — in the main row at y=0, just offset x
   for(const [key, dInfo] of dupeMap){
@@ -880,6 +901,14 @@ function buildLevelJSON({events, voiceCount, spacing, vol, atk, wave, title, use
       triggerSources:voiceBlockIds.map(id=>({triggerSourceBasic:{type:4,objectID:id}})),
       triggerTargets:[{triggerTargetSound:{objectID:dInfo.soundId, mode:1}}]
     }});
+    if(useExactLength && dInfo.leaveTriggerId){
+      nodes.push({objectID:dInfo.leaveTriggerId, levelNodeTrigger:{
+        shape:1000, position:{x:dInfo.x, y:0, z:0},
+        scale:{x:1.1,y:1.1,z:1.1}, rotation:{x:0,y:0,z:0,w:1}, isShared:false,
+        triggerSources:voiceBlockIds.map(id=>({triggerSourceBasic:{type:5,objectID:id}})),
+        triggerTargets:[{triggerTargetSound:{objectID:dInfo.soundId, mode:0}}]
+      }});
+    }
   }
 
   // ── Voice block animations (round-robin) ──────────────────────────────────
@@ -902,27 +931,37 @@ function buildLevelJSON({events, voiceCount, spacing, vol, atk, wave, title, use
     const count = seen.get(ekey)||0;
     seen.set(ekey, count+1);
 
-    const isDupe = !exactLength && count > 0 && needsDupe.has(ekey);
+    const isDupe = count > 0 && needsDupe.has(ekey);
     const info = isDupe ? dupeMap.get(ekey) : soundMap.get(ekey);
     if(!info) continue;
 
     const vi = cursor % voiceCount; cursor++;
     const az = AWAY_Z_BASE + vi*AWAY_Z_STEP;
-    const targetX = info.x;
-    const t0 = Math.max(0, ev.time-HOLD), t1=ev.time;
-    const tHoldEnd = exactLength ? Math.max(ev.time + ev.dur, ev.time + HOLD) : ev.time + HOLD;
-    const tOut = exactLength ? ev.time + ev.dur + HOLD : ev.time + HOLD;
-    framesByVoice[vi].push(
-      {time:t0, position:{x:targetX,y:0,z:az}, rotation:{x:0,y:0,z:0,w:1}},
-      {time:t1, position:{x:targetX,y:0,z:az}, rotation:{x:0,y:0,z:0,w:1}},
-      {time:t1, position:{x:targetX,y:0,z:HIT_Z}, rotation:{x:0,y:0,z:0,w:1}},
-      {time:tHoldEnd, position:{x:targetX,y:0,z:HIT_Z}, rotation:{x:0,y:0,z:0,w:1}},
-      {time:tOut, position:{x:targetX,y:0,z:HIT_Z}, rotation:{x:0,y:0,z:0,w:1}},
-      {time:tOut, position:{x:targetX,y:0,z:az}, rotation:{x:0,y:0,z:0,w:1}}
-    );
-  }
 
-  framesByVoice.forEach(fr => fr.sort((a, b) => a.time - b.time));
+    if(useExactLength){
+      // Block enters trigger precisely at note start, stays for note duration, exits on note end
+      const t_start = ev.time;
+      const t_end = ev.time + ev.dur;
+      const EPS = 0.001; // tiny delta so GRAB registers a proper enter/leave event
+      const t0 = Math.max(0, t_start - HOLD);
+      framesByVoice[vi].push(
+        {time:t0,                position:{x:info.x,y:0,z:az},    rotation:{x:0,y:0,z:0,w:1}}, // approaching
+        {time:t_start,           position:{x:info.x,y:0,z:az},    rotation:{x:0,y:0,z:0,w:1}}, // just outside
+        {time:t_start+EPS,       position:{x:info.x,y:0,z:HIT_Z}, rotation:{x:0,y:0,z:0,w:1}}, // entered → fires enter trigger
+        {time:Math.max(t_start+EPS, t_end-EPS), position:{x:info.x,y:0,z:HIT_Z}, rotation:{x:0,y:0,z:0,w:1}}, // inside for full duration
+        {time:t_end,             position:{x:info.x,y:0,z:az},    rotation:{x:0,y:0,z:0,w:1}}  // exited → fires leave trigger
+      );
+    } else {
+      const t0 = Math.max(0, ev.time-HOLD), t1=ev.time, t2=ev.time+HOLD;
+      framesByVoice[vi].push(
+        {time:t0, position:{x:info.x,y:0,z:az}, rotation:{x:0,y:0,z:0,w:1}},
+        {time:t1, position:{x:info.x,y:0,z:az}, rotation:{x:0,y:0,z:0,w:1}},
+        {time:t1, position:{x:info.x,y:0,z:HIT_Z}, rotation:{x:0,y:0,z:0,w:1}},
+        {time:t2, position:{x:info.x,y:0,z:HIT_Z}, rotation:{x:0,y:0,z:0,w:1}},
+        {time:t2, position:{x:info.x,y:0,z:az}, rotation:{x:0,y:0,z:0,w:1}}
+      );
+    }
+  }
 
   for(let v=0;v<voiceCount;v++){
     const az = AWAY_Z_BASE + v*AWAY_Z_STEP;
@@ -943,7 +982,7 @@ function buildLevelJSON({events, voiceCount, spacing, vol, atk, wave, title, use
   const instrCount = useInstrRecreation ? new Set(soundKeys.map(k=>k.program)).size : 1;
   return {
     formatVersion:17, title:title||'midi_level', creators:'MIDI2GRAB',
-    description:`${S} sounds · ${voiceCount} animated blocks · ${events.length} notes${useInstrRecreation?' · '+instrCount+' instrument'+(instrCount!==1?'s':''):''}${exactLength?' · exact length':''}`,
+    description:`${S} sounds · ${voiceCount} animated blocks · ${events.length} notes${useInstrRecreation?' · '+instrCount+' instrument'+(instrCount!==1?'s':''):''}`,
     tags:['innovative','showcase'], maxCheckpointCount:10, fogDensity:0,
     ambienceSettings:{
       skyZenithColor:{r:.04,g:.05,b:.10,a:1}, skyHorizonColor:{r:.08,g:.10,b:.16,a:1},
@@ -952,7 +991,8 @@ function buildLevelJSON({events, voiceCount, spacing, vol, atk, wave, title, use
     levelNodes:nodes,
     _nodeGuide:{
       soundBlocks:`objectID 1 to ${S}`,
-      triggerBlocks:`objectID ${S+1} to ${S*2}`,
+      enterTriggerBlocks:`objectID ${S+1} to ${S*2}`,
+      ...(useExactLength ? {leaveTriggerBlocks:`objectID ${S*2+1} to ${S*3}`} : {}),
       dupeSounds:needsDupe.size>0?`objectID ${dupeSoundBase} to ${dupeSoundBase+needsDupe.size-1}`:'none',
       dupeTriggers:needsDupe.size>0?`objectID ${dupeTrigBase} to ${dupeTrigBase+needsDupe.size-1}`:'none',
       voiceBlocks:`objectID ${BLOCK_ID_BASE} to ${BLOCK_ID_BASE+voiceCount-1}`
@@ -960,41 +1000,7 @@ function buildLevelJSON({events, voiceCount, spacing, vol, atk, wave, title, use
   };
 }
 
-
-window._midiExactMode = false;
-function applyExactModeState(on){
-  window._midiExactMode = !!on;
-  const exactCheck = document.getElementById('exactCheck');
-  const cmpExactCheck = document.getElementById('cmpExactCheck');
-  const exactDesc = document.getElementById('exactDesc');
-  const cmpExactDesc = document.getElementById('cmpExactDesc');
-  const dupeCheck = document.getElementById('dupeCheck');
-  const cmpDupeCheck = document.getElementById('cmpDupeCheck');
-  const dupeDesc = document.getElementById('dupeDesc');
-  const cmpDupeDesc = document.getElementById('cmpDupeDesc');
-  const dupeLabel = document.getElementById('dupeLabel');
-  const cmpDupeLabel = document.getElementById('cmpDupeLabel');
-
-  if(exactCheck && exactCheck.checked !== !!on) exactCheck.checked = !!on;
-  if(cmpExactCheck && cmpExactCheck.checked !== !!on) cmpExactCheck.checked = !!on;
-  if(exactDesc) exactDesc.style.display = on ? 'block' : 'none';
-  if(cmpExactDesc) cmpExactDesc.style.display = on ? 'block' : 'none';
-
-  if(dupeCheck) dupeCheck.disabled = !!on;
-  if(cmpDupeCheck) cmpDupeCheck.disabled = !!on;
-  if(dupeLabel){ dupeLabel.style.opacity = on ? '0.5' : '1'; dupeLabel.style.pointerEvents = on ? 'none' : 'auto'; }
-  if(cmpDupeLabel){ cmpDupeLabel.style.opacity = on ? '0.5' : '1'; cmpDupeLabel.style.pointerEvents = on ? 'none' : 'auto'; }
-  if(on){
-    if(dupeCheck) dupeCheck.checked = false;
-    if(cmpDupeCheck) cmpDupeCheck.checked = false;
-    if(dupeDesc) dupeDesc.style.display = 'none';
-    if(cmpDupeDesc) cmpDupeDesc.style.display = 'none';
-  }
-}
-function isExactMode(){ return !!window._midiExactMode; }
-
 function setupVoiceSlider(sliderId, numId, badgeId){
-
   const slider=document.getElementById(sliderId);
   const num=document.getElementById(numId);
   const badge=document.getElementById(badgeId);
@@ -1051,14 +1057,11 @@ document.querySelectorAll('.tab-btn').forEach(btn=>{
   const atkEl=document.getElementById('atk');
   const instrCheck=document.getElementById('instrCheck');
   const instrDesc=document.getElementById('instrDesc');
-  const exactCheck=document.getElementById('exactCheck');
-  const exactDesc=document.getElementById('exactDesc');
   const dupeCheck=document.getElementById('dupeCheck');
   const dupeDesc=document.getElementById('dupeDesc');
+  const exactLenCheck=document.getElementById('exactLenCheck');
+  const exactLenDesc=document.getElementById('exactLenDesc');
   const buildBtn=document.getElementById('buildBtn');
-
-  exactCheck.checked = !!window._midiExactMode;
-  applyExactModeState(exactCheck.checked);
 
   // Toggle instrument description + disable wave selector
   instrCheck.addEventListener('change',()=>{
@@ -1067,11 +1070,16 @@ document.querySelectorAll('.tab-btn').forEach(btn=>{
     waveSel.disabled=on;
     waveSel.style.opacity=on?'0.35':'1';
   });
-  exactCheck.addEventListener('change',()=>{
-    applyExactModeState(exactCheck.checked);
-  });
   dupeCheck.addEventListener('change',()=>{
     dupeDesc.style.display=dupeCheck.checked?'block':'none';
+  });
+  exactLenCheck.addEventListener('change',()=>{
+    exactLenDesc.style.display=exactLenCheck.checked?'block':'none';
+    // When exact length is on, disable the attack field (it's auto-zeroed)
+    const atkEl2=document.getElementById('atk');
+    atkEl2.disabled=exactLenCheck.checked;
+    atkEl2.style.opacity=exactLenCheck.checked?'0.35':'1';
+    atkEl2.title=exactLenCheck.checked?'Disabled — Exact Length zeroes attack/release automatically':'';
   });
 
   // Store per-pitch instrument program once MIDI is loaded
@@ -1223,7 +1231,7 @@ document.querySelectorAll('.tab-btn').forEach(btn=>{
     if(!events.length) return;stopPlay();
     const ac=getAC(),vol=+volEl.value||.8,waveIdx=+waveSel.value;
     const wt=['sine','square','triangle','sawtooth'][waveIdx==='4'?0:waveIdx]||'sawtooth';
-    const atk=exactCheck.checked ? 0 : (+atkEl.value||.01),now=ac.currentTime+.05;
+    const atk=+atkEl.value||.01,now=ac.currentTime+.05;
     schedNodes=[];
     for(const ev of events){
       const osc=ac.createOscillator(),gain=ac.createGain();
@@ -1248,6 +1256,7 @@ document.querySelectorAll('.tab-btn').forEach(btn=>{
     const VC=getVoiceCount();
     const useInstr=instrCheck.checked;
     const useDupe=dupeCheck.checked;
+    const useExact=exactLenCheck.checked;
     const json=buildLevelJSON({
       events,voiceCount:VC,
       spacing:+spacingEl.value||3,
@@ -1257,15 +1266,16 @@ document.querySelectorAll('.tab-btn').forEach(btn=>{
       title:songNameEl.textContent.replace('.roll',''),
       useInstrRecreation:useInstr,
       trackInstruments:true,
-      useDupeNotes:useDupe && !exactCheck.checked,
-      exactLength:exactCheck.checked
+      useDupeNotes:useDupe,
+      useExactLength:useExact
     });
     levelJson=json;
     const s=JSON.stringify(json,null,2);
     codeBox.textContent=s.slice(0,8000)+(s.length>8000?'\n\n// ...truncated':'');
     const instrNote=useInstr?' · instrument recreation on':'';
     const dupeNote=useDupe?' · dupe notes on':'';
-    ss(statusEl,`✓ ${json.levelNodes.length} total nodes built.${instrNote}${dupeNote}`,'ok');
+    const exactNote=useExact?' · exact length on':'';
+    ss(statusEl,`✓ ${json.levelNodes.length} total nodes built.${instrNote}${dupeNote}${exactNote}`,'ok');
     ss(expStatusEl,`${(s.length/1024).toFixed(1)} KB · ${json.levelNodes.length} nodes`,'ok');
     dlBtn.disabled=false;cpBtn.disabled=false;
   }
@@ -1535,7 +1545,7 @@ function initComposer(){
     if(!notes.length) return;
     const bpm=+bpmEl.value||120;
     const evts=notes.map(n=>({midi:n.midi,time:n.beat/bpm*60,dur:n.dur/bpm*60,vel:n.vel}));
-    const json=buildLevelJSON({events:evts,voiceCount:15,spacing:3,vol:.8,atk:.01,wave:3,title:'composer_level',exactLength:window._midiExactMode});
+    const json=buildLevelJSON({events:evts,voiceCount:15,spacing:3,vol:.8,atk:.01,wave:3,title:'composer_level'});
     const s=JSON.stringify(json,null,2);
     document.getElementById('compCodeBox').textContent=s.slice(0,8000)+(s.length>8000?'\n\n// ...truncated':'');
     document.getElementById('compOutputPanel').style.display='block';
@@ -1624,13 +1634,19 @@ function initComposer(){
   const cmpOutputTitle=document.getElementById('cmpOutputTitle');
   const fmtJsonBtn=document.getElementById('fmtJson');
   const fmtLevelBtn=document.getElementById('fmtLevel');
-  const cmpExactCheck=document.getElementById('cmpExactCheck');
-  const cmpExactDesc=document.getElementById('cmpExactDesc');
-
-  cmpExactCheck.checked = !!window._midiExactMode;
-  applyExactModeState(cmpExactCheck.checked);
+  const cmpExactLenCheck=document.getElementById('cmpExactLenCheck');
+  const cmpExactLenDesc=document.getElementById('cmpExactLenDesc');
 
   const ss=(msg,cls='')=>{cmpStatusEl.className='status'+(cls?' '+cls:'');cmpStatusEl.textContent=msg;};
+
+  // Exact length toggle for compiler tab
+  cmpExactLenCheck.addEventListener('change',()=>{
+    cmpExactLenDesc.style.display=cmpExactLenCheck.checked?'block':'none';
+    const atkEl3=document.getElementById('cmpAtk');
+    atkEl3.disabled=cmpExactLenCheck.checked;
+    atkEl3.style.opacity=cmpExactLenCheck.checked?'0.35':'1';
+    atkEl3.title=cmpExactLenCheck.checked?'Disabled — Exact Length zeroes attack/release automatically':'';
+  });
 
   // ── Format toggle ───────────────────────────────────
   function setFmt(fmt){
@@ -1647,9 +1663,7 @@ function initComposer(){
   }
   fmtJsonBtn.addEventListener('click',()=>setFmt('json'));
   fmtLevelBtn.addEventListener('click',()=>setFmt('level'));
-  cmpExactCheck.addEventListener('change',()=>applyExactModeState(cmpExactCheck.checked));
   setFmt('json');
-  if(cmpExactDesc) cmpExactDesc.style.display = cmpExactCheck.checked ? 'block' : 'none';
 
   // ── Base level loading (.level or .json) ───────────
   function loadBaseLevel(file){
@@ -1761,339 +1775,4 @@ function initComposer(){
         </div>
         <button class="slot-remove" data-idx="${i}" title="Remove">✕</button>
       `;
-      stackEl.appendChild(row);
-    });
-
-    stackEl.querySelectorAll('.slot-remove').forEach(btn=>{
-      btn.addEventListener('click',()=>{midiSlots.splice(+btn.dataset.idx,1);renderSlots();drawCmpRoll();updateCmpButtons();});
-    });
-    stackEl.querySelectorAll('.offset-input').forEach(inp=>{
-      inp.addEventListener('change',()=>{midiSlots[+inp.dataset.idx].timeOffset=Math.max(0,+inp.value||0);drawCmpRoll();});
-    });
-
-    cmpDropEl.style.display=midiSlots.length<MAX_SLOTS?'block':'none';
-    updateCmpButtons();
-  }
-
-  function updateCmpButtons(){
-    const has=midiSlots.length>0;
-    cmpBuildBtn.disabled=!has;cmpPreviewBtn.disabled=!has;
-  }
-
-  function parseMidiBuffer(buf,name,cb){
-    let midi;try{midi=new Midi(buf);}catch(e){ss('Parse error: '+e.message,'err');return;}
-    const raw=[];
-    for(const t of midi.tracks) for(const n of t.notes) raw.push({midi:n.midi,time:n.time,dur:Math.max(.04,n.duration),vel:n.velocity??0.8});
-    raw.sort((a,b)=>a.time-b.time);
-    const evts=compactEvents(raw,.04);
-    const dur=evts.length?Math.max(...evts.map(e=>e.time+e.dur)):0;
-    cb({name,events:evts,duration:dur,timeOffset:0});
-  }
-
-  function addMidiFile(file){
-    if(midiSlots.length>=MAX_SLOTS){ss('Maximum 5 MIDI files reached.','warn');return;}
-    if(!/\.(mid|midi)$/i.test(file.name)){ss('Need a .mid or .midi file','err');return;}
-    const r=new FileReader();
-    r.onload=e=>{
-      parseMidiBuffer(e.target.result,file.name.replace(/\.(mid|midi)$/i,''),slot=>{
-        slot.color=layerColors[midiSlots.length];
-        midiSlots.push(slot);
-        renderSlots();drawCmpRoll();
-        ss(`Added layer ${midiSlots.length}: "${slot.name}" (${slot.events.length} notes)`,'ok');
-      });
-    };
-    r.onerror=()=>ss('Could not read file','err');
-    r.readAsArrayBuffer(file);
-  }
-
-  cmpFileInput.addEventListener('change',e=>{[...e.target.files].forEach(addMidiFile);cmpFileInput.value='';});
-  cmpDropEl.addEventListener('dragover',e=>{e.preventDefault();cmpDropEl.classList.add('ov');});
-  cmpDropEl.addEventListener('dragleave',()=>cmpDropEl.classList.remove('ov'));
-  cmpDropEl.addEventListener('drop',e=>{e.preventDefault();cmpDropEl.classList.remove('ov');[...e.dataTransfer.files].forEach(addMidiFile);});
-
-  // ── Merge helpers ───────────────────────────────────
-  function getMergedEvents(){
-    const all=[];
-    midiSlots.forEach((slot,i)=>{
-      const pitchShift=LAYER_PITCH_OFFSETS[i];
-      for(const ev of slot.events) all.push({...ev,midi:ev.midi+pitchShift,time:ev.time+slot.timeOffset});
-    });
-    return all.sort((a,b)=>a.time-b.time||a.midi-b.midi);
-  }
-
-  // Merge new music nodes into an existing level JSON.
-  // Re-indexes new node objectIDs to avoid collisions with existing ones.
-  function mergeIntoBaseLevel(baseJson, newMusicJson){
-    const merged=JSON.parse(JSON.stringify(baseJson)); // deep clone
-
-    // Find the highest existing objectID so new ones don't collide
-    const existingNodes=Array.isArray(merged.levelNodes)?merged.levelNodes:[];
-    const maxId=existingNodes.reduce((mx,n)=>Math.max(mx,n.objectID||0),0);
-    const offset=maxId; // shift all new node IDs by this
-
-    // Clone & reindex new music nodes
-    const newNodes=JSON.parse(JSON.stringify(newMusicJson.levelNodes||[]));
-
-    // Build a mapping from old objectID → new objectID
-    const idMap=new Map();
-    newNodes.forEach(n=>idMap.set(n.objectID, n.objectID+offset));
-
-    // Apply remapping recursively
-    function remapIds(obj){
-      if(Array.isArray(obj)){obj.forEach(remapIds);return;}
-      if(obj&&typeof obj==='object'){
-        for(const k of Object.keys(obj)){
-          if(k==='objectID'&&typeof obj[k]==='number') obj[k]=(idMap.get(obj[k])||obj[k]+offset);
-          else remapIds(obj[k]);
-        }
-      }
-    }
-    remapIds(newNodes);
-
-    // Append
-    merged.levelNodes=[...existingNodes,...newNodes];
-
-    // Merge metadata fields
-    merged.description=(merged.description||'')+(merged.description?' + ':'')+( newMusicJson.description||'MIDI music');
-    if(!merged.tags) merged.tags=[];
-    (newMusicJson.tags||[]).forEach(t=>{if(!merged.tags.includes(t)) merged.tags.push(t);});
-
-    return merged;
-  }
-
-  // ── Canvas preview ──────────────────────────────────
-  function drawCmpRoll(){
-    const dpr=window.devicePixelRatio||1;
-    const W=cmpCvWrap.clientWidth||600,H=300;
-    cmpCanvas.width=W*dpr;cmpCanvas.height=H*dpr;cmpCanvas.style.width=W+'px';cmpCanvas.style.height=H+'px';
-    const ctx=cmpCanvas.getContext('2d');
-    ctx.setTransform(dpr,0,0,dpr,0,0);
-    ctx.fillStyle='#07080f';ctx.fillRect(0,0,W,H);
-    if(!midiSlots.length){cmpEmpty.style.display='flex';return;}
-    cmpEmpty.style.display='none';
-    const merged=getMergedEvents();
-    if(!merged.length) return;
-    const allDur=Math.max(...merged.map(e=>e.time+e.dur));
-    const pitches=[...new Set(merged.map(e=>e.midi))].sort((a,b)=>a-b);
-    const minP=pitches[0],span=Math.max(pitches[pitches.length-1]-minP,1);
-    const LW=48,pps=(W-LW)/Math.max(allDur,1),lH=Math.min(18,(H-18)/(span+1));
-    const pY=m=>H-8-(m-minP+.5)*lH;
-    ctx.strokeStyle='rgba(255,255,255,.04)';ctx.lineWidth=1;
-    const step=Math.max(1,Math.ceil(allDur/10));
-    for(let t=0;t<=allDur;t+=step){
-      const x=LW+t*pps;ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();
-      ctx.fillStyle='rgba(255,255,255,.15)';ctx.font='9px Space Mono,monospace';ctx.fillText(t.toFixed(0)+'s',x+2,H-3);
-    }
-    midiSlots.forEach((slot,si)=>{
-      const pitchShift=LAYER_PITCH_OFFSETS[si];
-      for(const ev of slot.events){
-        const m=ev.midi+pitchShift,t=ev.time+slot.timeOffset;
-        const x=LW+t*pps,y=pY(m),w=Math.max(2,ev.dur*pps-1);
-        ctx.fillStyle=slot.color+'88';ctx.fillRect(x,y-lH/2+1,w,lH-1);
-      }
-    });
-    midiSlots.forEach((slot,i)=>{
-      ctx.fillStyle=slot.color;ctx.font='bold 9px Space Mono,monospace';
-      ctx.fillText(`L${i+1}: ${slot.name.slice(0,16)}`,LW+4,12+i*13);
-    });
-    if(baseLevelData){
-      ctx.fillStyle='rgba(77,255,200,.6)';ctx.font='9px Space Mono,monospace';
-      ctx.fillText(`⊞ Base: ${baseLevelName.slice(0,20)} (${Array.isArray(baseLevelData.levelNodes)?baseLevelData.levelNodes.length:0} nodes)`,LW+4,H-14);
-    }
-  }
-
-  // ── Audio preview ───────────────────────────────────
-  function getCmpAC(){if(!cmpAC) cmpAC=new(window.AudioContext||window.webkitAudioContext)();if(cmpAC.state==='suspended') cmpAC.resume();return cmpAC;}
-
-  function stopCmpPlay(){
-    cmpPlaying=false;cancelAnimationFrame(cmpRafId);
-    cmpScheduled.forEach(({o,g})=>{try{o.stop();}catch{}try{g.disconnect();}catch{}});
-    cmpScheduled=[];cmpStopBtn.disabled=true;cmpPreviewBtn.disabled=!midiSlots.length;
-  }
-
-  function startCmpPlay(){
-    if(!midiSlots.length) return;stopCmpPlay();
-    const ac=getCmpAC();
-    const vol=+document.getElementById('cmpVol').value||.8;
-    const waveIdx=+document.getElementById('cmpWaveSel').value;
-    const wt=['sine','square','triangle','sawtooth'][Math.min(waveIdx,3)]||'sawtooth';
-    const atk=cmpExactCheck.checked ? 0 : (+document.getElementById('cmpAtk').value||.01);
-    const now=ac.currentTime+.05;cmpStartAC=now;
-    const evts=getMergedEvents();
-    cmpScheduled=[];
-    for(const ev of evts){
-      const osc=ac.createOscillator(),g=ac.createGain();
-      osc.type=wt;osc.frequency.value=midiFreq(ev.midi);
-      g.gain.setValueAtTime(0,now+ev.time);g.gain.linearRampToValueAtTime(vol*ev.vel,now+ev.time+atk);
-      g.gain.setValueAtTime(vol*ev.vel,now+ev.time+ev.dur-.05);g.gain.linearRampToValueAtTime(0,now+ev.time+ev.dur);
-      osc.connect(g).connect(ac.destination);osc.start(now+ev.time);osc.stop(now+ev.time+ev.dur+.06);
-      cmpScheduled.push({o:osc,g});
-    }
-    const totalDur=evts.length?Math.max(...evts.map(e=>e.time+e.dur)):0;
-    cmpPlaying=true;cmpPreviewBtn.disabled=true;cmpStopBtn.disabled=false;
-    (function tick(){
-      if(!cmpPlaying) return;const t=ac.currentTime-cmpStartAC;
-      if(t>totalDur+.8){stopCmpPlay();return;}
-      cmpRafId=requestAnimationFrame(tick);
-    })();
-  }
-
-  cmpPreviewBtn.addEventListener('click',startCmpPlay);
-  cmpStopBtn.addEventListener('click',stopCmpPlay);
-
-  // ── Build ───────────────────────────────────────────
-  cmpBuildBtn.addEventListener('click',()=>{
-    if(!midiSlots.length) return;
-    const evts=getMergedEvents();
-    const VC=getCmpVoice();
-    const musicJson=buildLevelJSON({
-      events:evts,voiceCount:VC,
-      spacing:+document.getElementById('cmpSpacing').value||3,
-      vol:+document.getElementById('cmpVol').value||.8,
-      atk:+document.getElementById('cmpAtk').value||.01,
-      wave:+document.getElementById('cmpWaveSel').value,
-      title: baseLevelData?(baseLevelData.title||'compiled_level'):'compiled_level',
-      exactLength:cmpExactCheck.checked
-    });
-
-    cmpLevelJson = baseLevelData ? mergeIntoBaseLevel(baseLevelData, musicJson) : musicJson;
-
-    const s=JSON.stringify(cmpLevelJson,null,2);
-    document.getElementById('cmpCodeBox').textContent=s.slice(0,8000)+(s.length>8000?'\n\n// ...truncated':'');
-    cmpOutputPanel.style.display='block';
-    updateOutputTitle();
-
-    const baseNote=baseLevelData?` + ${Array.isArray(baseLevelData.levelNodes)?baseLevelData.levelNodes.length:0} base nodes`:'';
-    document.getElementById('cmpExpStatus').textContent=
-      `${(s.length/1024).toFixed(1)} KB · ${cmpLevelJson.levelNodes.length} total nodes${baseNote} · ${midiSlots.length} MIDI layers`;
-
-    ss(`✓ ${baseLevelData?'Merged into base level':'Compiled'}: ${midiSlots.length} layers → ${evts.length} notes · ${cmpLevelJson.levelNodes.length} nodes`,'ok');
-  });
-
-  // ── Download ─────────────────────────────────────────
-  // Both .json and .level export the same JSON content.
-  // .level is the extension GRAB and grab-tools.live use natively for JSON-format levels.
-  // Drop either into Documents/GRAB/levels/user (PC) or the Quest equivalent.
-  document.getElementById('cmpDlBtn').addEventListener('click',()=>{
-    if(!cmpLevelJson) return;
-    const s=JSON.stringify(cmpLevelJson,null,2);
-    const ext=outputFmt==='level'?'.level':'.json';
-    const rawTitle=cmpLevelJson.title||'compiled_level';
-    const baseName=(rawTitle.trim().replace(/[^\w\s\-]/g,'').replace(/\s+/g,'_')||'compiled_level');
-    const a=Object.assign(document.createElement('a'),{
-      href:URL.createObjectURL(new Blob([s],{type:'application/json'})),
-      download:baseName+ext
-    });
-    a.click();
-    setTimeout(()=>URL.revokeObjectURL(a.href),2000);
-    document.getElementById('cmpExpStatus').textContent=`Downloaded ${baseName+ext}`;
-  });
-
-  document.getElementById('cmpCpBtn').addEventListener('click',async()=>{
-    if(!cmpLevelJson) return;
-    try{
-      await navigator.clipboard.writeText(JSON.stringify(cmpLevelJson,null,2));
-      document.getElementById('cmpExpStatus').textContent='Copied to clipboard!';
-    }catch{
-      document.getElementById('cmpExpStatus').textContent='Copy failed — use Download instead.';
-    }
-  });
-
-  let resT;window.addEventListener('resize',()=>{clearTimeout(resT);resT=setTimeout(drawCmpRoll,120);});
-  renderSlots();drawCmpRoll();
-})();
-
-// ── PASSWORD GATE LOGIC ────────────────────────────────────────────────────
-(function(){
-  const HASH    = 'd7fd49fefb227c608708ffb6908768ebdbeea0fe3a1de46c495152f9f649d82c';
-  const STORE_KEY = 'mg_auth';
-
-  const gate  = document.getElementById('gate');
-  const input = document.getElementById('gateInput');
-  const btn   = document.getElementById('gateBtn');
-  const hint  = document.getElementById('gateHint');
-  const eye   = document.getElementById('gateEye');
-
-  async function sha256hex(str) {
-    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
-    return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
-  }
-
-  // If the stored token matches the hash, skip the gate instantly
-  function isAlreadyUnlocked() {
-    try { return localStorage.getItem(STORE_KEY) === HASH; } catch { return false; }
-  }
-
-  function persistUnlock() {
-    try { localStorage.setItem(STORE_KEY, HASH); } catch {}
-  }
-
-  function unlock(instant) {
-    persistUnlock();
-    if (instant) {
-      gate.style.display = 'none';
-      return;
-    }
-    hint.textContent = '✓ Access granted';
-    hint.className = 'gate-hint ok';
-    input.className = 'gate-input right';
-    gate.classList.add('unlocking');
-    setTimeout(() => { gate.style.display = 'none'; }, 450);
-  }
-
-  // Skip gate immediately if already authenticated
-  if (isAlreadyUnlocked()) { unlock(true); return; }
-
-  eye.addEventListener('click', () => {
-    const show = input.type === 'password';
-    input.type = show ? 'text' : 'password';
-    eye.textContent = show ? '🙈' : '👁';
-    input.focus();
-  });
-
-  async function tryUnlock() {
-    const val = input.value;
-    if (!val.length) {
-      hint.textContent = 'Password cannot be empty.';
-      hint.className = 'gate-hint err';
-      return;
-    }
-    const h = await sha256hex(val);
-    if (h === HASH) {
-      unlock(false);
-    } else {
-      hint.textContent = 'Incorrect password. Try again.';
-      hint.className = 'gate-hint err';
-      input.className = 'gate-input wrong';
-      input.value = '';
-      setTimeout(() => { input.className = 'gate-input'; }, 400);
-      input.focus();
-    }
-  }
-
-  btn.addEventListener('click', tryUnlock);
-  input.addEventListener('keydown', e => { if (e.key === 'Enter') tryUnlock(); });
-  input.focus();
-})();
-
-// ── TUTORIAL TOGGLE ───────────────────────────────────────────────────────
-(function(){
-  const btn   = document.getElementById('tutorialToggle');
-  const panel = document.getElementById('tutorialPanel');
-  const close = document.getElementById('tutorialClose');
-  if(!btn||!panel) return;
-  btn.addEventListener('click',()=>{
-    const open = panel.style.display==='none';
-    panel.style.display = open ? 'block' : 'none';
-    btn.style.background = open ? 'rgba(139,111,255,.18)' : 'rgba(139,111,255,.08)';
-    btn.textContent = open ? '📖 Tutorial ▲' : '📖 Tutorial';
-  });
-  close.addEventListener('click',()=>{
-    panel.style.display='none';
-    btn.style.background='rgba(139,111,255,.08)';
-    btn.textContent='📖 Tutorial';
-  });
-})();
-</script>
-</body>
-</html>
+      stackEl.a
