@@ -390,13 +390,13 @@ input[type=range]::-moz-range-thumb{width:17px;height:17px;border-radius:50%;bac
           <div id="exactLenDesc" style="display:none;font-size:11px;color:var(--m);line-height:1.65;padding:8px 13px;border-radius:9px;background:rgba(61,252,190,.04);border:1px solid rgba(61,252,190,.12)">
             Animated blocks stay inside triggers for the exact note duration. The sound repeats while inside and stops when the block exits. Attack and release are disabled for seamless looping. Default sound length is set to ~1 second per repeat cycle.
           </div>
-          <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:10px 13px;border-radius:10px;border:1px solid var(--b);background:rgba(255,255,255,.02);transition:background .15s" id="complexityLabel">
-            <input type="checkbox" id="complexityCheck" style="width:16px;height:16px;accent-color:var(--a2);cursor:pointer;flex-shrink:0"/>
-            <span style="font-size:13px;font-weight:600">Complexity Saver <span style="opacity:.7">(new)</span></span>
-            <span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:5px;background:rgba(155,127,255,.1);border:1px solid rgba(155,127,255,.25);color:var(--a2);margin-left:auto;flex-shrink:0">NEW</span>
+          <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:10px 13px;border-radius:10px;border:1px solid var(--b);background:rgba(255,255,255,.02);transition:background .15s" id="complexSaverLabel">
+            <input type="checkbox" id="complexSaverCheck" style="width:16px;height:16px;accent-color:var(--a3);cursor:pointer;flex-shrink:0"/>
+            <span style="font-size:13px;font-weight:600">Complexity Saver</span>
+            <span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:5px;background:rgba(255,179,71,.1);border:1px solid rgba(255,179,71,.3);color:var(--a3);margin-left:auto;flex-shrink:0">NEW</span>
           </label>
-          <div id="complexityDesc" style="display:none;font-size:11px;color:var(--m);line-height:1.65;padding:8px 13px;border-radius:9px;background:rgba(155,127,255,.05);border:1px solid rgba(155,127,255,.14)">
-            Uses longer sustain bars and keeps the motion simpler so bigger levels stay lighter. When Exact Length is on, it keeps the same on/off trigger behavior.
+          <div id="complexSaverDesc" style="display:none;font-size:11px;color:var(--m);line-height:1.65;padding:8px 13px;border-radius:9px;background:rgba(255,179,71,.04);border:1px solid rgba(255,179,71,.12)">
+            Replaces the animated voice block pool with one large static sensor block + one animated trigger per pitch. Each pitch fires itself — unlimited simultaneous notes, no voice cycling. Saves <em>voiceCount</em> nodes. With Exact Length, triggers stay inside the sensor block for the note's full duration and only move in Z (never left/right).
           </div>
         </div>
         <div class="r3">
@@ -606,14 +606,11 @@ input[type=range]::-moz-range-thumb{width:17px;height:17px;border-radius:50%;bac
           <span style="font-size:13px;font-weight:600">Exact Length</span>
           <span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:5px;background:rgba(61,252,190,.1);border:1px solid rgba(61,252,190,.25);color:var(--a);margin-left:auto;flex-shrink:0">BETA</span>
         </label>
-        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:10px 13px;border-radius:10px;border:1px solid var(--b);background:rgba(255,255,255,.02);transition:background .15s" id="cmpComplexityLabel">
-          <input type="checkbox" id="cmpComplexityCheck" style="width:16px;height:16px;accent-color:var(--a2);cursor:pointer;flex-shrink:0"/>
-          <span style="font-size:13px;font-weight:600">Complexity Saver <span style="opacity:.7">(new)</span></span>
-          <span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:5px;background:rgba(155,127,255,.1);border:1px solid rgba(155,127,255,.25);color:var(--a2);margin-left:auto;flex-shrink:0">NEW</span>
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:10px 13px;border-radius:10px;border:1px solid var(--b);background:rgba(255,255,255,.02);transition:background .15s" id="cmpComplexSaverLabel">
+          <input type="checkbox" id="cmpComplexSaverCheck" style="width:16px;height:16px;accent-color:var(--a3);cursor:pointer;flex-shrink:0"/>
+          <span style="font-size:13px;font-weight:600">Complexity Saver</span>
+          <span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:5px;background:rgba(255,179,71,.1);border:1px solid rgba(255,179,71,.3);color:var(--a3);margin-left:auto;flex-shrink:0">NEW</span>
         </label>
-        <div id="cmpComplexityDesc" style="display:none;font-size:11px;color:var(--m);line-height:1.65;padding:8px 13px;border-radius:9px;background:rgba(155,127,255,.05);border:1px solid rgba(155,127,255,.14)">
-          Uses longer sustain bars and keeps the motion simpler so bigger levels stay lighter. When Exact Length is on, it keeps the same on/off trigger behavior.
-        </div>
 
         <!-- Output format toggle -->
         <div class="field">
@@ -715,18 +712,6 @@ function buildLevelJSON({events, voiceCount, spacing, vol, atk, wave, title, use
   pitches.forEach((m,idx)=>{pitchInfo.set(m,{soundId:idx+1,triggerId:P+idx+1,freq:midiFreq(m),name:noteName(m)});});
   const songDuration=events.length?Math.max(...events.map(e=>e.time+e.dur)):0;
 
-  // Longest note per pitch, used only by the complexity saver to stretch the target bar.
-  const maxDurByPitch=new Map();
-  for(const ev of events){
-    maxDurByPitch.set(ev.midi, Math.max(maxDurByPitch.get(ev.midi)||0, ev.dur||0));
-  }
-  const depthForPitch=m=>{
-    if(!useComplexitySaver) return 1;
-    const d=maxDurByPitch.get(m)||0;
-    const base=useExactLength ? Math.max(d, 0.25) : Math.max(d, 0.12);
-    return Math.max(1.35, Math.min(18, base*3.5));
-  };
-
   // Duplicate detection — only active when useDupeNotes is on
   const CHORD_WINDOW=0.03;
   const groups=new Map();
@@ -781,9 +766,8 @@ function buildLevelJSON({events, voiceCount, spacing, vol, atk, wave, title, use
     const info=pitchInfo.get(m);
     const idx=pitches.indexOf(m);
     const x=(idx-(P-1)/2)*spacing;
-    const zScale=depthForPitch(m);
     nodes.push({objectID:info.soundId,levelNodeSound:{
-      position:{x,y:2,z:0},rotation:{x:0,y:0,z:0,w:1},scale:{x:1,y:1,z:zScale},
+      position:{x,y:2,z:0},rotation:{x:0,y:0,z:0,w:1},scale:{x:1,y:1,z:1},
       startActive:false,
       parameters:soundParams(m),
       volume:vol,maxRangeFactor:1000,repeat:useExactLength?true:false,name:`sound_${info.name.replace('#','s')}_${m}`
@@ -796,16 +780,16 @@ function buildLevelJSON({events, voiceCount, spacing, vol, atk, wave, title, use
     const sec=secInfo.get(m);
     const idx=pitches.indexOf(m);
     const x=(idx-(P-1)/2)*spacing;
-    const zScale=depthForPitch(m);
     nodes.push({objectID:sec.soundId,levelNodeSound:{
-      position:{x,y:3.2,z:0},rotation:{x:0,y:0,z:0,w:1},scale:{x:1,y:1,z:zScale},
+      position:{x,y:3.2,z:0},rotation:{x:0,y:0,z:0,w:1},scale:{x:1,y:1,z:1},
       startActive:false,
       parameters:soundParams(m),
       volume:vol,maxRangeFactor:1000,repeat:useExactLength?true:false,name:`sound2_${info.name.replace('#','s')}_${m}`
     }});
   }
 
-  // ── Primary trigger blocks ────────────────────────────────────────────────
+  // ── Primary trigger blocks (standard mode only) ──────────────────────────
+  if(!useComplexitySaver){
   for(const m of pitches){
     const info=pitchInfo.get(m);
     const idx=pitches.indexOf(m);
@@ -820,10 +804,10 @@ function buildLevelJSON({events, voiceCount, spacing, vol, atk, wave, title, use
     }};
     nodes.push(trigNode);
   }
+  } // end !useComplexitySaver primary triggers
 
-  // ── Secondary trigger blocks (for doubled pitches) ────────────────────────
-  // Also listen to ALL voice blocks — positioned at y=-1.2 so they get hit by
-  // the same sweeping blocks when they pass through that row
+  // ── Secondary trigger blocks (standard mode only) ────────────────────────
+  if(!useComplexitySaver){
   for(const m of doubledPitches){
     const sec=secInfo.get(m);
     const idx=pitches.indexOf(m);
@@ -838,8 +822,59 @@ function buildLevelJSON({events, voiceCount, spacing, vol, atk, wave, title, use
     }};
     nodes.push(secTrigNode);
   }
+  } // end !useComplexitySaver secondary triggers
 
-  // ── Voice block animations ────────────────────────────────────────────────
+  // ── Complexity Saver: animated triggers + one large sensor block ─────────
+  if(useComplexitySaver){
+    const CS_HOLD=0.10, CS_AWAY=2.5, CS_HIT=0;
+    const totalXSpan=Math.max(2,(P-1)*spacing+spacing*2);
+    const bigBlockId=BLOCK_ID_BASE;
+    nodes.push({objectID:bigBlockId,levelNodeStatic:{
+      shape:1000,position:{x:0,y:0,z:0},
+      scale:{x:totalXSpan,y:1.2,z:1.2},
+      rotation:{x:0,y:0,z:0,w:1},material:8,
+      isNeon:false,isTransparent:true,isGrabbable:false,
+      isGrapplable:false,isPassable:false,isAdditive:false,specularBrightness:0
+    }});
+    for(const m of pitches){
+      const info=pitchInfo.get(m);
+      const x=(pitches.indexOf(m)-(P-1)/2)*spacing;
+      const pitchEvts=events.filter(ev=>ev.midi===m).sort((a,b)=>a.time-b.time);
+      const frames=[];
+      frames.push({time:0,position:{x,y:0,z:CS_AWAY},rotation:{x:0,y:0,z:0,w:1}});
+      for(const ev of pitchEvts){
+        const t0=Math.max(0,ev.time-CS_HOLD);
+        const t1=ev.time;
+        const t2=useExactLength?ev.time+Math.max(CS_HOLD,ev.dur):ev.time+CS_HOLD;
+        frames.push(
+          {time:t0,position:{x,y:0,z:CS_AWAY},rotation:{x:0,y:0,z:0,w:1}},
+          {time:t1,position:{x,y:0,z:CS_AWAY},rotation:{x:0,y:0,z:0,w:1}},
+          {time:t1,position:{x,y:0,z:CS_HIT}, rotation:{x:0,y:0,z:0,w:1}},
+          {time:t2,position:{x,y:0,z:CS_HIT}, rotation:{x:0,y:0,z:0,w:1}},
+          {time:t2,position:{x,y:0,z:CS_AWAY},rotation:{x:0,y:0,z:0,w:1}}
+        );
+      }
+      frames.push({time:songDuration+1,position:{x,y:0,z:CS_AWAY},rotation:{x:0,y:0,z:0,w:1}});
+      const tgts=useExactLength?[
+        {triggerTargetSound:{objectID:info.soundId,mode:3,repeat:true}},
+        {triggerTargetSound:{objectID:info.soundId,repeat:true},mode:1}
+      ]:[{triggerTargetSound:{objectID:info.soundId,mode:1}}];
+      const csTrig={
+        objectID:info.triggerId,
+        animations:[{name:`ct_${info.name.replace('#','s')}`,speed:1,currentFrameIndex:0,frames}],
+        activeAnimation:0,
+        levelNodeTrigger:{
+          shape:1000,position:{x,y:0,z:CS_AWAY},scale:{x:1.1,y:1.1,z:1.1},
+          rotation:{x:0,y:0,z:0,w:1},isShared:false,
+          triggerSources:[{triggerSourceBasic:{type:4,objectID:bigBlockId}}],
+          triggerTargets:tgts
+        }
+      };
+      if(useExactLength) csTrig.levelNodeTrigger.triggerExitTargets=[{triggerTargetSound:{objectID:info.soundId,mode:0}}];
+      nodes.push(csTrig);
+    }
+  } else {
+  // ── Voice block animations (standard mode) ───────────────────────────────
   // Strategy: round-robin voice assignment across all voiceCount blocks.
   // Each note event gets the next available voice block in a cycle.
   // Duplicate pitches (same pitch same chord) are fine because each gets its own voice.
@@ -919,10 +954,11 @@ function buildLevelJSON({events, voiceCount, spacing, vol, atk, wave, title, use
       }
     });
   }
+  } // end else (standard mode)
 
   const totalSounds=P+D;
   return {formatVersion:17,title:title||'midi_level',creators:'MIDI2GRAB',
-    description:`${P} pitches · ${D>0?D+' doubled · ':''}${voiceCount} animated blocks · ${events.length} notes${useComplexitySaver?' · complexity saver':''}`,
+    description:`${P} pitches · ${D>0?D+' doubled · ':''}${useComplexitySaver?'complexity saver · '+P+' animated triggers + 1 block':voiceCount+' animated blocks'} · ${events.length} notes`,
     tags:['innovative','showcase'],maxCheckpointCount:10,fogDensity:0,
     ambienceSettings:{skyZenithColor:{r:.04,g:.05,b:.10,a:1},skyHorizonColor:{r:.08,g:.10,b:.16,a:1},
       sunAltitude:30,sunAzimuth:270,sunSize:.5,fogDensity:0},
@@ -936,6 +972,7 @@ function buildLevelJSON({events, voiceCount, spacing, vol, atk, wave, title, use
     }
   };
 }
+
 function setupVoiceSlider(sliderId, numId, badgeId){
   const slider=document.getElementById(sliderId);
   const num=document.getElementById(numId);
@@ -997,7 +1034,8 @@ document.querySelectorAll('.tab-btn').forEach(btn=>{
   const dupeDesc=document.getElementById('dupeDesc');
   const exactLenCheck=document.getElementById('exactLenCheck');
   const exactLenDesc=document.getElementById('exactLenDesc');
-  const complexityCheck=document.getElementById('complexityCheck');
+  const complexSaverCheck=document.getElementById('complexSaverCheck');
+  const complexSaverDesc=document.getElementById('complexSaverDesc');
   const buildBtn=document.getElementById('buildBtn');
 
   // Toggle instrument description + disable wave selector
@@ -1012,6 +1050,11 @@ document.querySelectorAll('.tab-btn').forEach(btn=>{
   });
   exactLenCheck.addEventListener('change',()=>{
     exactLenDesc.style.display=exactLenCheck.checked?'block':'none';
+  });
+  complexSaverCheck.addEventListener('change',()=>{
+    complexSaverDesc.style.display=complexSaverCheck.checked?'block':'none';
+    const vf=document.querySelector('.voice-field');
+    if(vf) vf.style.opacity=complexSaverCheck.checked?'0.35':'1';
   });
 
   // ── GM Instrument → GRAB sound params map ────────────────────────────────
@@ -1245,6 +1288,7 @@ document.querySelectorAll('.tab-btn').forEach(btn=>{
     const useInstr=instrCheck.checked;
     const useDupe=dupeCheck.checked;
     const useExactLen=exactLenCheck.checked;
+    const useCS=complexSaverCheck.checked;
     const json=buildLevelJSON({
       events,voiceCount:VC,
       spacing:+spacingEl.value||3,
@@ -1256,7 +1300,8 @@ document.querySelectorAll('.tab-btn').forEach(btn=>{
       pitchProgramMap:pitchProgram,
       gmToParams,
       useDupeNotes:useDupe,
-      useExactLength:useExactLen
+      useExactLength:useExactLen,
+      useComplexitySaver:useCS
     });
     levelJson=json;
     const s=JSON.stringify(json,null,2);
@@ -1265,7 +1310,9 @@ document.querySelectorAll('.tab-btn').forEach(btn=>{
     const instrNote=useInstr?' · instrument recreation on':'';
     const dupeNote=useDupe?' · dupe notes on':'';
     const exactNote=useExactLen?' · exact length on':'';
-    ss(statusEl,`✓ ${P} sounds + ${P} triggers + ${VC} animated blocks. ${json.levelNodes.length} total nodes.${instrNote}${dupeNote}${exactNote}`,'ok');
+    const csNote=useCS?' · complexity saver on':'';
+    const nodeDesc=useCS?`${P} animated triggers + 1 sensor block`:`${VC} animated blocks`;
+    ss(statusEl,`✓ ${P} sounds + ${P} triggers + ${nodeDesc}. ${json.levelNodes.length} total nodes.${instrNote}${dupeNote}${exactNote}${csNote}`,'ok');
     ss(expStatusEl,`${(s.length/1024).toFixed(1)} KB · ${json.levelNodes.length} nodes`,'ok');
     dlBtn.disabled=false;cpBtn.disabled=false;
   }
@@ -1613,7 +1660,6 @@ function initComposer(){
   const cmpCanvas=document.getElementById('cmpRollCanvas');
   const cmpEmpty=document.getElementById('cmpCvEmpty');
   const cmpBuildBtn=document.getElementById('cmpBuildBtn');
-  const cmpComplexityCheck=document.getElementById('cmpComplexityCheck');
   const cmpPreviewBtn=document.getElementById('cmpPreviewBtn');
   const cmpStopBtn=document.getElementById('cmpStopBtn');
   const baseLevelDrop=document.getElementById('baseLevelDrop');
@@ -1948,7 +1994,7 @@ function initComposer(){
       wave:+document.getElementById('cmpWaveSel').value,
       title: baseLevelData?(baseLevelData.title||'compiled_level'):'compiled_level',
       useExactLength:document.getElementById('cmpExactLenCheck').checked,
-      useComplexitySaver:cmpComplexityCheck.checked
+      useComplexitySaver:document.getElementById('cmpComplexSaverCheck').checked
     });
 
     cmpLevelJson = baseLevelData ? mergeIntoBaseLevel(baseLevelData, musicJson) : musicJson;
