@@ -382,6 +382,14 @@ input[type=range]::-moz-range-thumb{width:17px;height:17px;border-radius:50%;bac
           <div id="dupeDesc" style="display:none;font-size:11px;color:var(--m);line-height:1.65;padding:8px 13px;border-radius:9px;background:rgba(155,127,255,.05);border:1px solid rgba(155,127,255,.15)">
             When the same pitch plays twice simultaneously, creates a second sound + trigger block for it so both fire independently. May not work perfectly on all MIDIs.
           </div>
+          <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:10px 13px;border-radius:10px;border:1px solid var(--b);background:rgba(255,255,255,.02);transition:background .15s" id="exactLenLabel">
+            <input type="checkbox" id="exactLenCheck" style="width:16px;height:16px;accent-color:var(--a);cursor:pointer;flex-shrink:0"/>
+            <span style="font-size:13px;font-weight:600">Exact Length</span>
+            <span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:5px;background:rgba(61,252,190,.1);border:1px solid rgba(61,252,190,.25);color:var(--a);margin-left:auto;flex-shrink:0">BETA</span>
+          </label>
+          <div id="exactLenDesc" style="display:none;font-size:11px;color:var(--m);line-height:1.65;padding:8px 13px;border-radius:9px;background:rgba(61,252,190,.04);border:1px solid rgba(61,252,190,.12)">
+            Animated blocks stay inside triggers for the exact note duration. The sound repeats while inside and stops when the block exits. Attack and release are disabled for seamless looping. Default sound length is set to ~1 second per repeat cycle.
+          </div>
         </div>
         <div class="r3">
           <div class="field"><label>Spacing (m)</label>
@@ -585,6 +593,11 @@ input[type=range]::-moz-range-thumb{width:17px;height:17px;border-radius:50%;bac
           </div>
           <div class="voice-hint">Recommended: 15–20 blocks.</div>
         </div>
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:10px 13px;border-radius:10px;border:1px solid var(--b);background:rgba(255,255,255,.02);transition:background .15s" id="cmpExactLenLabel">
+          <input type="checkbox" id="cmpExactLenCheck" style="width:16px;height:16px;accent-color:var(--a);cursor:pointer;flex-shrink:0"/>
+          <span style="font-size:13px;font-weight:600">Exact Length</span>
+          <span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:5px;background:rgba(61,252,190,.1);border:1px solid rgba(61,252,190,.25);color:var(--a);margin-left:auto;flex-shrink:0">BETA</span>
+        </label>
 
         <!-- Output format toggle -->
         <div class="field">
@@ -677,7 +690,7 @@ function compactEvents(list, grid=0.04){
   return [...map.values()].sort((a,b)=>a.time-b.time||a.midi-b.midi);
 }
 
-function buildLevelJSON({events, voiceCount, spacing, vol, atk, wave, title, useInstrRecreation=false, pitchProgramMap=null, gmToParams=null, useDupeNotes=false}){
+function buildLevelJSON({events, voiceCount, spacing, vol, atk, wave, title, useInstrRecreation=false, pitchProgramMap=null, gmToParams=null, useDupeNotes=false, useExactLength=false}){
   const waveType = Math.min(3, Math.max(0, Math.round(wave)));
   const pitchSet=new Set(events.map(e=>e.midi));
   const pitches=[...pitchSet].sort((a,b)=>a-b);
@@ -711,6 +724,16 @@ function buildLevelJSON({events, voiceCount, spacing, vol, atk, wave, title, use
 
   // Build sound params — uses GM instrument map if instrument recreation is on
   function soundParams(m){
+    if(useExactLength){
+      const waveType2 = Math.min(3, Math.max(0, Math.round(wave)));
+      return {volume:vol,waveType:waveType2,envelopeAttack:0.001,envelopeSustain:0.9,envelopeRelease:0.001,
+        envelopePunch:0,frequencyBase:Math.round(midiFreq(m)),frequencyLimit:30,
+        frequencyRamp:0,frequencyDeltaRamp:0,vibratoStrength:0,vibratoSpeed:0,
+        pitchJumpMod:0,pitchJumpSpeed:0,dutyCycle:.5,dutyCycleRamp:0,
+        repeatSpeed:0.5,flangerFrequency:0,flangerDepth:0,
+        lowPassFilterFrequency:10000,highPassFilterFrequency:0,
+        reverbDelay:0,reverbDecayFactor:0};
+    }
     if(useInstrRecreation && pitchProgramMap && gmToParams){
       const prog=pitchProgramMap.get(m)??0;
       const p=gmToParams(prog,vol);
@@ -734,7 +757,7 @@ function buildLevelJSON({events, voiceCount, spacing, vol, atk, wave, title, use
       position:{x,y:2,z:0},rotation:{x:0,y:0,z:0,w:1},scale:{x:1,y:1,z:1},
       startActive:false,
       parameters:soundParams(m),
-      volume:vol,maxRangeFactor:1000,repeat:false,name:`sound_${info.name.replace('#','s')}_${m}`
+      volume:vol,maxRangeFactor:1000,repeat:useExactLength?true:false,name:`sound_${info.name.replace('#','s')}_${m}`
     }});
   }
 
@@ -748,7 +771,7 @@ function buildLevelJSON({events, voiceCount, spacing, vol, atk, wave, title, use
       position:{x,y:3.2,z:0},rotation:{x:0,y:0,z:0,w:1},scale:{x:1,y:1,z:1},
       startActive:false,
       parameters:soundParams(m),
-      volume:vol,maxRangeFactor:1000,repeat:false,name:`sound2_${info.name.replace('#','s')}_${m}`
+      volume:vol,maxRangeFactor:1000,repeat:useExactLength?true:false,name:`sound2_${info.name.replace('#','s')}_${m}`
     }});
   }
 
@@ -757,11 +780,13 @@ function buildLevelJSON({events, voiceCount, spacing, vol, atk, wave, title, use
     const info=pitchInfo.get(m);
     const idx=pitches.indexOf(m);
     const x=(idx-(P-1)/2)*spacing;
-    nodes.push({objectID:info.triggerId,levelNodeTrigger:{
+    const trigNode={objectID:info.triggerId,levelNodeTrigger:{
       shape:1000,position:{x,y:0,z:0},scale:{x:1.1,y:1.1,z:1.1},rotation:{x:0,y:0,z:0,w:1},isShared:false,
       triggerSources:voiceBlockIds.map(id=>({triggerSourceBasic:{type:4,objectID:id}})),
       triggerTargets:[{triggerTargetSound:{objectID:info.soundId,mode:1}}]
-    }});
+    }};
+    if(useExactLength) trigNode.levelNodeTrigger.triggerExitTargets=[{triggerTargetSound:{objectID:info.soundId,mode:0}}];
+    nodes.push(trigNode);
   }
 
   // ── Secondary trigger blocks (for doubled pitches) ────────────────────────
@@ -771,11 +796,13 @@ function buildLevelJSON({events, voiceCount, spacing, vol, atk, wave, title, use
     const sec=secInfo.get(m);
     const idx=pitches.indexOf(m);
     const x=(idx-(P-1)/2)*spacing;
-    nodes.push({objectID:sec.triggerId,levelNodeTrigger:{
+    const secTrigNode={objectID:sec.triggerId,levelNodeTrigger:{
       shape:1000,position:{x,y:-1.2,z:0},scale:{x:1.1,y:1.1,z:1.1},rotation:{x:0,y:0,z:0,w:1},isShared:false,
       triggerSources:voiceBlockIds.map(id=>({triggerSourceBasic:{type:4,objectID:id}})),
       triggerTargets:[{triggerTargetSound:{objectID:sec.soundId,mode:1}}]
-    }});
+    }};
+    if(useExactLength) secTrigNode.levelNodeTrigger.triggerExitTargets=[{triggerTargetSound:{objectID:sec.soundId,mode:0}}];
+    nodes.push(secTrigNode);
   }
 
   // ── Voice block animations ────────────────────────────────────────────────
@@ -814,7 +841,7 @@ function buildLevelJSON({events, voiceCount, spacing, vol, atk, wave, title, use
     const awayZ = AWAY_Z_BASE + vi*AWAY_Z_STEP;
     const t0 = Math.max(0, ev.time-HOLD);
     const t1 = ev.time;
-    const t2 = ev.time+HOLD;
+    const t2 = useExactLength ? ev.time+Math.max(HOLD, ev.dur) : ev.time+HOLD;
 
     framesByVoice[vi].push(
       {time:t0, position:{x,y:0,z:awayZ}, rotation:{x:0,y:0,z:0,w:1}},
@@ -935,6 +962,8 @@ document.querySelectorAll('.tab-btn').forEach(btn=>{
   const instrDesc=document.getElementById('instrDesc');
   const dupeCheck=document.getElementById('dupeCheck');
   const dupeDesc=document.getElementById('dupeDesc');
+  const exactLenCheck=document.getElementById('exactLenCheck');
+  const exactLenDesc=document.getElementById('exactLenDesc');
   const buildBtn=document.getElementById('buildBtn');
 
   // Toggle instrument description + disable wave selector
@@ -946,6 +975,9 @@ document.querySelectorAll('.tab-btn').forEach(btn=>{
   });
   dupeCheck.addEventListener('change',()=>{
     dupeDesc.style.display=dupeCheck.checked?'block':'none';
+  });
+  exactLenCheck.addEventListener('change',()=>{
+    exactLenDesc.style.display=exactLenCheck.checked?'block':'none';
   });
 
   // ── GM Instrument → GRAB sound params map ────────────────────────────────
@@ -1178,6 +1210,7 @@ document.querySelectorAll('.tab-btn').forEach(btn=>{
     const VC=getVoiceCount();
     const useInstr=instrCheck.checked;
     const useDupe=dupeCheck.checked;
+    const useExactLen=exactLenCheck.checked;
     const json=buildLevelJSON({
       events,voiceCount:VC,
       spacing:+spacingEl.value||3,
@@ -1188,7 +1221,8 @@ document.querySelectorAll('.tab-btn').forEach(btn=>{
       useInstrRecreation:useInstr,
       pitchProgramMap:pitchProgram,
       gmToParams,
-      useDupeNotes:useDupe
+      useDupeNotes:useDupe,
+      useExactLength:useExactLen
     });
     levelJson=json;
     const s=JSON.stringify(json,null,2);
@@ -1196,7 +1230,8 @@ document.querySelectorAll('.tab-btn').forEach(btn=>{
     const P=pitches.length;
     const instrNote=useInstr?' · instrument recreation on':'';
     const dupeNote=useDupe?' · dupe notes on':'';
-    ss(statusEl,`✓ ${P} sounds + ${P} triggers + ${VC} animated blocks. ${json.levelNodes.length} total nodes.${instrNote}${dupeNote}`,'ok');
+    const exactNote=useExactLen?' · exact length on':'';
+    ss(statusEl,`✓ ${P} sounds + ${P} triggers + ${VC} animated blocks. ${json.levelNodes.length} total nodes.${instrNote}${dupeNote}${exactNote}`,'ok');
     ss(expStatusEl,`${(s.length/1024).toFixed(1)} KB · ${json.levelNodes.length} nodes`,'ok');
     dlBtn.disabled=false;cpBtn.disabled=false;
   }
@@ -1876,7 +1911,8 @@ function initComposer(){
       vol:+document.getElementById('cmpVol').value||.8,
       atk:+document.getElementById('cmpAtk').value||.01,
       wave:+document.getElementById('cmpWaveSel').value,
-      title: baseLevelData?(baseLevelData.title||'compiled_level'):'compiled_level'
+      title: baseLevelData?(baseLevelData.title||'compiled_level'):'compiled_level',
+      useExactLength:document.getElementById('cmpExactLenCheck').checked
     });
 
     cmpLevelJson = baseLevelData ? mergeIntoBaseLevel(baseLevelData, musicJson) : musicJson;
